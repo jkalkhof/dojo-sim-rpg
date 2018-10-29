@@ -5,31 +5,30 @@ copyright 2018 Jerry Kalkhof
 
 This project is based off the html5 game engine melonjs.
 
-Major features
--top down, click to navigate map movement
--simple dialogue system
+## Major features
+- top down, click to navigate map movement
+- simple dialogue system
 
-version 1.0
+## version 1.0
 This version is very basic and only has basic movement of the main character.
 Simple conversations with other NPCs.
 
-This project was built using the following tools:
--atom - text editor
--tiled - tilemap editor
--twinejs - dialogue tree editor
--dialogue builder tool from Tomas Jurman
+## This project was built using the following tools:
+- atom - text editor
+- tiled - tilemap editor
+- twinejs - dialogue tree editor
+- dialogue builder tool from Tomas Jurman
 -- https://github.com/Kibo/dialoguesBuilder
--interactive dialog - dialogue system for MelonJS from Tomas Jurman
+- interactive dialog - dialogue system for MelonJS from Tomas Jurman
 -- https://github.com/Kibo/melonjs-cookbook
 
-CREDITS
-Interior tileset from Zarth - rpg maker
-http://zharthrpg.blogspot.com/2014/03/building-ship-map.html
-Sprite characters from Bombone studios
-https://bombonestudios.tumblr.com/
+## CREDITS
+- Interior tileset from Zarth - rpg maker
+- http://zharthrpg.blogspot.com/2014/03/building-ship-map.html
+- Sprite characters from Bombone studios
+- https://bombonestudios.tumblr.com/
 
-
-Run Instructions for Windows
+## Run Instructions for Windows
 1. install ubuntu - microsoft windows subsystem
 	https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6#activetab=pivot:overviewtab
 2. use nodejs to install http server

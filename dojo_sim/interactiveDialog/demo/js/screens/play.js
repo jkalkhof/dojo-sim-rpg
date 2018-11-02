@@ -8,6 +8,11 @@ game.PlayScreen = me.ScreenObject.extend({
 
 		// change the default sort property
 		//me.game.world.sortOn = "y";
+
+		// add StudentManager to create students
+		this.studentManager = new game.StudentManager();
+		this.studentManager.createEnemies();
+		me.game.world.addChild(this.studentManager, 2);
 	},
 
 	/**

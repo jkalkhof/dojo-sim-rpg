@@ -60,6 +60,8 @@ var game = {
 		me.pool.register("hero", game.HeroEntity);
 		me.pool.register("girl", game.GirlEntity);
 		me.pool.register("oldman", game.OldManEntity);
+		me.pool.register("student", game.StudentEntity);
+		me.pool.register("exit", game.ExitEntity);
 
 		// Start the game.
 		me.state.change(me.state.PLAY);

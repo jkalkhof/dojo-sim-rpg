@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.6" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" backgroundcolor="#838383" nextobjectid="17">
+<map version="1.0" tiledversion="1.1.6" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" backgroundcolor="#838383" nextobjectid="23">
  <tileset firstgid="1" name="Ship_A5" tilewidth="32" tileheight="64" tilecount="64" columns="8">
   <image source="Ship_A5.png" width="256" height="512"/>
  </tileset>
@@ -25,9 +25,9 @@
 0,0,0,3,7,7,7,7,7,7,3,3,3,3,3,136,0,0,0,0,
 0,0,145,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,7,7,7,7,7,7,7,7,7,7,7,7,136,0,0,0,0,
-0,0,145,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,145,165,165,165,165,165,7,7,7,7,7,7,7,136,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+0,0,145,3,3,0,0,0,3,3,0,0,0,0,0,0,0,0,0,0,
+0,0,145,3,3,3,3,3,3,3,7,7,7,7,7,136,0,0,0,0,
+0,0,164,164,164,164,164,164,164,164,164,164,164,164,164,164,0,0,0,0
 </data>
  </layer>
  <layer name="Tile Layer 2" width="20" height="20">
@@ -56,14 +56,13 @@
  </layer>
  <objectgroup color="#ff0000" name="collision">
   <object id="8" x="96" y="320" width="160" height="64"/>
-  <object id="9" x="96" y="544" width="160" height="64"/>
   <object id="14" x="96" y="96">
-   <polyline points="0,0 384,0 384,192 416,192 416,256 384,256 384,512 0,512 0,0"/>
+   <polyline points="0,0 384,0 384,192 416,192 416,256 384,256 384,480 0,480 0,0"/>
   </object>
  </objectgroup>
  <objectgroup name="Object Layer 1">
   <object id="3" name="hero" x="288" y="480" width="32" height="32"/>
-  <object id="12" name="oldman" x="352" y="352" width="32" height="32"/>
   <object id="16" name="exit" x="480" y="288" width="32" height="64"/>
+  <object id="17" name="spawn" x="448" y="288" width="32" height="32"/>
  </objectgroup>
 </map>

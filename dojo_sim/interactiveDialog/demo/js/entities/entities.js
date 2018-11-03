@@ -39,6 +39,11 @@ game.BaseEntity = me.Entity.extend({
             if (this.debugLevel > 1) console.log("_calculateStep(",this.name,"): reached target - dx: ",
               Number(dx).toFixed(2), " dy: ", Number(dy).toFixed(2));
         		delete this._target;
+
+            if (this.name == "student") {
+              this.currentState = this.StateEnum.stopped;
+            }
+
         		return;
       	}
 
@@ -135,11 +140,19 @@ game.BaseEntity = me.Entity.extend({
 
          this._setDirection(this._target.x - this.pos.x, this._target.y - this.pos.y);
          if (this.debugLevel > 0) console.log("_setTargetPosition: direction: ", this.direction);
-         this.renderable.setCurrentAnimation( this.direction );
+         if (this.renderable) {
+           this.renderable.setCurrentAnimation( this.direction );
+         } else {
+           console.log("_setTargetPosition: renderable is undefined!");
+         }
 
          // this.body.setVelocity(3,3);
-         this.body.setVelocity(1,1);
-         this.body.falling = false;
+         if (this.body) {
+           this.body.setVelocity(1,1);
+           this.body.falling = false;
+         } else {
+           console.log("_setTargetPosition: body is undefined!");
+         }
 
          if (this.debugLevel > 1) console.log("_setTargetPosition: body.falling: ", this.body.falling);
          if (this.debugLevel > 1) console.log("_setTargetPosition: body.vel: ", Number(this.body.vel.x).toFixed(2), Number(this.body.vel.y).toFixed(2));
@@ -173,6 +186,7 @@ game.BaseEntity = me.Entity.extend({
           //this.doTalk( res.a );
           if (!res.b.isTalking) {
             this.doTalk( res.b );
+            return false;
           }
         } else if ((res.a.name == "hero") && (res.b.name == "oldman")) {
           if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
@@ -184,8 +198,9 @@ game.BaseEntity = me.Entity.extend({
           if (!res.b.isTalking) {
             this.doTalk( res.b );
             //this.doTalk( "student" );
+            return false;
           }
-        } else if ((res.a.name == "hero") && (res.b.name == "student")) {
+        } else if ((res.a.name == "hero") && (res.b.name == "student") && (res.b.currentState == res.b.StateEnum.stopped)) {
           if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
 
           delete this._target;
@@ -195,17 +210,35 @@ game.BaseEntity = me.Entity.extend({
           if (!res.b.isTalking) {
             this.doTalk( res.b );
             // this.doTalk( "student" );
+            return false;
           }
 
-        } else if ((res.a.name == "student") && (res.b.name == "exit")) {
+        } else if ((res.a.name == "student") && (res.b.name == "exit") && (res.a.currentState == res.a.StateEnum.leaving)) {
+
           if (this.debugLevel > 0) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
 
           delete this._target;
 
-          // remove it - student leaves through exit
-          me.game.world.removeChild(this);
-        }
+          // spawn a new student using studentManager after a random period of time...
+          game.studentManager = me.game.world.getChildByName("studentManager")[0];
+          game.studentManager.removeStudent(this);
 
+          // wait for 2 sec - let the hero go away
+          var waitFor = 2000;
+          this.timer = me.timer.setTimeout(function () {
+            console.log("onCollision: add new student");
+
+            // spawn a new student using studentManager after a random period of time...
+            game.studentManager = me.game.world.getChildByName("studentManager")[0];
+            game.studentManager.spawnStudent();
+
+            me.timer.clearInterval(this.timer);
+        	}.bind(this), waitFor);
+
+          return false;
+        } // collision test
+
+        return true;
       }
 
       //if (res && obj.type == me.game.WORLD_SHAPE) {
@@ -216,14 +249,15 @@ game.BaseEntity = me.Entity.extend({
         // debugger;
 
         delete this._target;
-    	// 	this.pos.x -= res.x;
-    	// 	this.pos.y -= res.y;
-      //
-      //   delete this._target;
+    	// this.pos.x -= res.x;
+    	// this.pos.y -= res.y;
 
       	// this._setDirection( -res.x, -res.y );
       	// this.renderable.setCurrentAnimation( this.direction );
+        // return false;
       }
+
+      return true;
     },
 
     /**
@@ -265,9 +299,36 @@ game.BaseEntity = me.Entity.extend({
             game.ExitEntity = me.game.world.getChildByName("exit")[0];
             var exitPos = game.ExitEntity.pos;
 
-            this._setTargetPosition(exitPos);
+            if (this.renderable) {
+                this._setTargetPosition(exitPos);
+            } else {
+              console.log("onDialogReset: ", this.name, " renderable is undefined!");
+            }
 
             this.isTalking = false;
+        } else if (this.dialog.signedup) {
+          this.currentState = this.StateEnum.movingToPosition;
+
+          // spawn a new student using studentManager after a random period of time...
+          game.studentManager = me.game.world.getChildByName("studentManager")[0];
+          var studentPos = game.studentManager.getAvailablePosition(this.id);
+
+          this._setTargetPosition(studentPos);
+          this.isTalking = false;
+
+          // wait for 2 sec - let the hero go away
+          var waitFor = 2000;
+          this.timer = me.timer.setTimeout(function () {
+            console.log("onDialogReset: add new student");
+
+            // spawn a new student using studentManager after a random period of time...
+            game.studentManager = me.game.world.getChildByName("studentManager")[0];
+            game.studentManager.spawnStudent();
+
+            me.timer.clearInterval(this.timer);
+        	}.bind(this), waitFor);
+        } else {
+          this.isTalking = false;
         }
       }
 
@@ -735,7 +796,8 @@ game.StudentEntity = game.BaseEntity.extend({
 
         // set the default horizontal & vertical speed (accel vector)
         // walking & jumping speed
-        this.body.setVelocity(3,3);
+        //this.body.setVelocity(3,3);
+        this.body.setVelocity(0,0);
         this.body.setFriction(0.4,0.4);
 
         this.collidable = true;
@@ -743,17 +805,9 @@ game.StudentEntity = game.BaseEntity.extend({
         this.collisionType = me.collision.types.ENEMY_OBJECT;
 
 
-        var texture =  new me.video.renderer.Texture(
-            { framewidth: 48, frameheight: 48 },
-            me.loader.getImage("boys_martial_arts")
-        );
+
 
         // create a new sprite object
-        // create a new sprite object
-        // this.renderable = texture.createAnimationFromName([9,10,11,
-        //   21,22,23,
-        //   33,34,35,
-        //   45,46,47]);
 
         // use sprite sheet offsets 0,1,2,3,4,5,6
         // offset 0 - instructor Hero
@@ -777,75 +831,7 @@ game.StudentEntity = game.BaseEntity.extend({
         console.log("StudentEntity: init: spriteSheetGroup: ", this.spriteSheetGroup);
         // debugger;
 
-        if ((this.spriteSheetGroup >= 0) && (this.spriteSheetGroup <= 3)) {
-          // first 4 rows
-          // 0..11
-          // 12..23
-          // 24..35
-          // 36..47
-          this.renderable = texture.createAnimationFromName([
-            0,1,2,3,4,5,6,7,8,9,10,11,
-            12,13,14,15,16,17,18,19,20,21,22,23,
-            24,25,26,27,28,29,30,31,32,33,34,35,
-            36,37,38,39,40,41,42,43,44,45,46,47]);
-        } else {
-          // next 4 rows
-          // 48..59
-          // 60..71
-          // 72..83
-          // 84..95
-          this.renderable = texture.createAnimationFromName([
-            0,1,2,3,4,5,6,7,8,9,10,11,
-            12,13,14,15,16,17,18,19,20,21,22,23,
-            24,25,26,27,28,29,30,31,32,33,34,35,
-            36,37,38,39,40,41,42,43,44,45,46,47,
-            48,49,50,51,52,53,54,55,56,57,58,59,
-            60,61,62,63,64,65,66,67,68,69,70,71,
-            72,73,74,75,76,77,78,79,80,81,82,83,
-            84,85,86,87,88,89,90,91,92,93,94,95]);
-        }
-
-        if (this.spriteSheetGroup == 0) {
-          this.renderable.addAnimation("down", [0,1,2]);
-          this.renderable.addAnimation("left", [12,13,14]);
-          this.renderable.addAnimation("right", [24,25,26]);
-          this.renderable.addAnimation("up", [36,37,38]);
-        } else if (this.spriteSheetGroup == 1) {
-          this.renderable.addAnimation("down", [3,4,5]);
-          this.renderable.addAnimation("left", [15,16,17]);
-          this.renderable.addAnimation("right", [27,28,29]);
-          this.renderable.addAnimation("up", [40,41,42]);
-        } else if (this.spriteSheetGroup == 2) {
-          this.renderable.addAnimation("down", [6,7,8]);
-          this.renderable.addAnimation("left", [18,19,20]);
-          this.renderable.addAnimation("right", [30,31,32]);
-          this.renderable.addAnimation("up", [43,44,45]);
-        } else if (this.spriteSheetGroup == 3) {
-          this.renderable.addAnimation("down", [9,10,11]);
-          this.renderable.addAnimation("left", [21,22,23]);
-          this.renderable.addAnimation("right", [33,34,35]);
-          this.renderable.addAnimation("up", [45,46,47]);
-        } else if (this.spriteSheetGroup == 4) {
-          this.renderable.addAnimation("down", [48,49,50]);
-          this.renderable.addAnimation("left", [60,61,62]);
-          this.renderable.addAnimation("right", [72,73,74]);
-          this.renderable.addAnimation("up", [84,85,86]);
-        } else if (this.spriteSheetGroup == 5) {
-          this.renderable.addAnimation("down", [51,52,53]);
-          this.renderable.addAnimation("left", [63,64,65]);
-          this.renderable.addAnimation("right", [75,76,77]);
-          this.renderable.addAnimation("up", [87,88,89]);
-        } else if (this.spriteSheetGroup == 6) {
-          this.renderable.addAnimation("down", [54,55,56]);
-          this.renderable.addAnimation("left", [66,67,68]);
-          this.renderable.addAnimation("right", [78,79,80]);
-          this.renderable.addAnimation("up", [90,91,92]);
-        } else {
-          this.renderable.addAnimation("down", [9,10,11]);
-          this.renderable.addAnimation("left", [21,22,23]);
-          this.renderable.addAnimation("right", [33,34,35]);
-          this.renderable.addAnimation("up", [45,46,47]);
-        }
+        this.createRenderable();
 
 				// this.minX = x;
         // this.minY = y;
@@ -872,19 +858,115 @@ game.StudentEntity = game.BaseEntity.extend({
         // set the renderable position to bottom center
         // this.anchorPoint.set(0.5, 0.5);
         this.anchorPoint.set(0,0);
-        this.renderable.anchorPoint.set(0,0);
+
 
 				// create dialog
 				//this.dialog = new game.Dialog( DIALOGUES[ this.name ], this.onDialogReset.bind(this), this.onDialogShow.bind(this));
-        this.dialog = new game.Dialog( DIALOGUES[ "student" ], this.onDialogReset.bind(this), this.onDialogShow.bind(this));
+        this.dialog = new game.Dialog( DIALOGUES[ "student" ],
+            this.onDialogReset.bind(this),
+            this.onDialogShow.bind(this),
+            this.onSpriteLookup.bind(this));
 
-        this.StateEnum = Object.freeze({"stopped":1, "moving":2, "leaving":3});
+        this.StateEnum = Object.freeze({"stopped":1, "moving":2, "leaving":3, "movingToPosition":4});
 
         this.currentState = this.StateEnum.stopped;
         // this.currentState = this.StateEnum.moving;
+    },
+
+    createRenderable: function() {
+
+      var texture =  new me.video.renderer.Texture(
+          { framewidth: 48, frameheight: 48 },
+          me.loader.getImage("boys_martial_arts")
+      );
+
+      if ((this.spriteSheetGroup >= 0) && (this.spriteSheetGroup <= 3)) {
+        // first 4 rows
+        // 0..11
+        // 12..23
+        // 24..35
+        // 36..47
+        this.renderable = texture.createAnimationFromName([
+          0,1,2,3,4,5,6,7,8,9,10,11,
+          12,13,14,15,16,17,18,19,20,21,22,23,
+          24,25,26,27,28,29,30,31,32,33,34,35,
+          36,37,38,39,40,41,42,43,44,45,46,47]);
+      } else {
+        // next 4 rows
+        // 48..59
+        // 60..71
+        // 72..83
+        // 84..95
+        this.renderable = texture.createAnimationFromName([
+          0,1,2,3,4,5,6,7,8,9,10,11,
+          12,13,14,15,16,17,18,19,20,21,22,23,
+          24,25,26,27,28,29,30,31,32,33,34,35,
+          36,37,38,39,40,41,42,43,44,45,46,47,
+          48,49,50,51,52,53,54,55,56,57,58,59,
+          60,61,62,63,64,65,66,67,68,69,70,71,
+          72,73,74,75,76,77,78,79,80,81,82,83,
+          84,85,86,87,88,89,90,91,92,93,94,95]);
+      }
 
 
-	},
+      if (this.spriteSheetGroup == 0) {
+        // offset 0 - instructor Hero
+        this.renderable.addAnimation("down", [0,1,2]);
+        this.renderable.addAnimation("left", [12,13,14]);
+        this.renderable.addAnimation("right", [24,25,26]);
+        this.renderable.addAnimation("up", [36,37,38]);
+      } else if (this.spriteSheetGroup == 1) {
+        // offset 1 - bald in black gi
+        this.renderable.addAnimation("down", [3,4,5]);
+        this.renderable.addAnimation("left", [15,16,17]);
+        this.renderable.addAnimation("right", [27,28,29]);
+        this.renderable.addAnimation("up", [39,40,41]);
+      } else if (this.spriteSheetGroup == 2) {
+        // offset 2 - yellow hair in red gi
+        this.renderable.addAnimation("down", [6,7,8]);
+        this.renderable.addAnimation("left", [18,19,20]);
+        this.renderable.addAnimation("right", [30,31,32]);
+        this.renderable.addAnimation("up", [42,43,44]);
+      } else if (this.spriteSheetGroup == 3) {
+        // offset 3 - old man
+        this.renderable.addAnimation("down", [9,10,11]);
+        this.renderable.addAnimation("left", [21,22,23]);
+        this.renderable.addAnimation("right", [33,34,35]);
+        this.renderable.addAnimation("up", [45,46,47]);
+      } else if (this.spriteSheetGroup == 4) {
+        // offset 4 - girl in white gi and pink hair
+        this.renderable.addAnimation("down", [48,49,50]);
+        this.renderable.addAnimation("left", [60,61,62]);
+        this.renderable.addAnimation("right", [72,73,74]);
+        this.renderable.addAnimation("up", [84,85,86]);
+      } else if (this.spriteSheetGroup == 5) {
+        // offset 5 - man with black gi and blond hair
+        this.renderable.addAnimation("down", [51,52,53]);
+        this.renderable.addAnimation("left", [63,64,65]);
+        this.renderable.addAnimation("right", [75,76,77]);
+        this.renderable.addAnimation("up", [87,88,89]);
+      } else if (this.spriteSheetGroup == 6) {
+        // offset 6 - man with blue hair and red gi
+        this.renderable.addAnimation("down", [54,55,56]);
+        this.renderable.addAnimation("left", [66,67,68]);
+        this.renderable.addAnimation("right", [78,79,80]);
+        this.renderable.addAnimation("up", [90,91,92]);
+      } else {
+        this.renderable.addAnimation("down", [9,10,11]);
+        this.renderable.addAnimation("left", [21,22,23]);
+        this.renderable.addAnimation("right", [33,34,35]);
+        this.renderable.addAnimation("up", [45,46,47]);
+      }
+
+      this.renderable.anchorPoint.set(0,0);
+    },
+
+    // called by dialogue to get proper sprite index
+    onSpriteLookup:function(){
+      console.log("onSpriteLookup: ", this.name);
+
+      return this.spriteSheetGroup;
+    },
 
     update: function(dt) {
 
@@ -893,16 +975,16 @@ game.StudentEntity = game.BaseEntity.extend({
        		this._setRandomTargetPosition();
         }
 
-        if(!this.isTalking){
+        if(!this.isTalking && (this.currentState != this.StateEnum.stopped)) {
         	this._calculateStep(dt);
         } else {
           // disable collisions
           // this.collisionType = me.collision.types.NO_OBJECT;
 
           // note: If I don't let npc keep walking, it traps the player in conversation
-          // this.body.vel.x = 0;
-      		// this.body.vel.y = 0;
-          // this.body.setVelocity(0,0);
+          this.body.vel.x = 0;
+      		this.body.vel.y = 0;
+          this.body.setVelocity(0,0);
         }
 
         // apply physics to the body (this moves the entity)
@@ -923,14 +1005,23 @@ game.StudentEntity = game.BaseEntity.extend({
 
 game.ExitEntity = me.Entity.extend({
 
+  init: function(x, y, settings) {
+    console.log("ExitEntity: init: x:",x," y:",y);
+    // call the constructor
+    this._super(me.Entity, "init", [x, y , settings]);
+  }
+
+});
+
+game.SpawnEntity = me.Entity.extend({
 
   init: function(x, y, settings) {
-
-    console.log("ExitEntity: init: x:",x," y:",y);
-
+    console.log("SpawnEntity: init: x:",x," y:",y);
     // call the constructor
     this._super(me.Entity, "init", [x, y , settings]);
 
+    // disable collision detection with all other objects
+    this.body.setCollisionMask(me.collision.types.NO_OBJECT);
   }
 
 });

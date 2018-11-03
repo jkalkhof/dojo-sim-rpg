@@ -17,7 +17,7 @@ window.game = window.game || {};
  * @example
  * myEntity.dialog = new game.Dialog();
  */
-game.Dialog = function( data, onReset, onShow ) {
+game.Dialog = function( data, onReset, onShow, onSpriteLookup ) {
 	if( data ) {
 		this.setData( data );
 	}
@@ -28,6 +28,11 @@ game.Dialog = function( data, onReset, onShow ) {
 
 	if( typeof onShow == "function" ) {
 		this.onShow = onShow;
+	}
+
+	// jwk - new stuff
+	if (typeof onSpriteLookup == "function" ) {
+		this.onSpriteLookup = onSpriteLookup;
 	}
 };
 
@@ -110,6 +115,7 @@ _p.set = function( id ) {
  * @function
  */
 _p.show = function( ) {
+	console.log("DialogPrototype: show:");
 	this._cleanDOMContainer( );
 
 	var DOMSentence = this.get( ).isChoice ? this._getChoiceAsDOM( this.get( ) ) : this._getSentenceAsDOM( this.get( ) );
@@ -130,6 +136,15 @@ _p.show = function( ) {
  */
 _p.onShow = function( e ) {
 };
+
+/**
+ * hook function - called when the dialog is showed
+ * jwk - new stuff
+ */
+_p.onSpriteLookup = function( e ) {
+	return 0;
+};
+
 
 /**
  * get the root of dialogues
@@ -153,6 +168,8 @@ _p.getRoot = function( ) {
  * @return {?Object} actor or null
  */
 _p.getActor = function( id ) {
+	console.log("DialogPrototype: getActor: ",id);
+
 	var actor = null;
 	for( var idx = 0; idx < this._data.actors.length; idx++ ) {
 		if( this._data.actors[ idx ].id == id ) {
@@ -325,8 +342,20 @@ _p._isActive = function( sentence ) {
  * @return {Object} DOM element
  */
 _p._getSentenceAsDOM = function( sentence ) {
+	var actorName = this.getActor( sentence.actor ).name;
+
+	console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
+
+	if (actorName == "student") {
+		// use a special hook to get spriteIndex from StudentEntity.spriteSheetGroup
+		if (this.onSpriteLookup) {
+			actorName = "student"+this.onSpriteLookup();
+			console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
+		}
+	}
+
 	var container = document.createElement( "div" );
-	container.setAttribute( "class", "dialog " + this.getActor( sentence.actor ).name );
+	container.setAttribute( "class", "dialog " + actorName );
 	container.appendChild( this._createSentence( sentence ) );
 	return container;
 };

@@ -11,7 +11,9 @@ game.PlayScreen = me.ScreenObject.extend({
 
 		// add StudentManager to create students
 		this.studentManager = new game.StudentManager();
-		this.studentManager.createEnemies();
+		//this.studentManager.createEnemies();
+		this.studentManager.spawnStudent();
+		this.studentManager.name = "studentManager"; // lookup by name later...
 		me.game.world.addChild(this.studentManager, 2);
 	},
 

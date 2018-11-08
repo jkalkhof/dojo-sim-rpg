@@ -31,6 +31,9 @@ var game = {
 		});
 	}
 
+	// Plugin: AStar pathfinding
+	me.plugin.register(me.astar, "aStarPlugin");
+
 	// Initialize the audio.
 	me.audio.init("mp3,ogg");
 
@@ -63,6 +66,7 @@ var game = {
 		me.pool.register("student", game.StudentEntity);
 		me.pool.register("exit", game.ExitEntity);
 		me.pool.register("spawn", game.SpawnEntity);
+		me.pool.register("chaser", game.ChaserEntity);
 
 		// Start the game.
 		me.state.change(me.state.PLAY);

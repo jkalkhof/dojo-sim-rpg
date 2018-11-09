@@ -1037,6 +1037,8 @@ game.ChaserEntity = me.Entity.extend({
     init: function(x, y, settings) {
         console.log("ChaserEntity: init");
 
+        this.debugLevel = 1;
+
         settings.framewidth = settings.width = 48;
         settings.frameheight = settings.height = 48;
 
@@ -1115,6 +1117,8 @@ game.ChaserEntity = me.Entity.extend({
         this.anchorPoint.set(0,0);
         this.renderable.anchorPoint.set(0,0);
 
+        this.reachedTarget = false;
+
     },
 
     chessboard: function() {
@@ -1140,11 +1144,10 @@ game.ChaserEntity = me.Entity.extend({
         // this.updateColRect(0, 16, 16, 16);
 
 
-        if (this.target == null) {
+        if ((this.target == null) && !this.reachedTarget) {
             // we should globally store this value
             //this.target = me.game.getEntityByName('hero')[0];
             this.target = me.game.world.getChildByName("hero")[0];
-
             console.log("ChaserEntity: update target: ", this.target.name);
         }
 
@@ -1157,20 +1160,6 @@ game.ChaserEntity = me.Entity.extend({
             // not moving anywhere
             // friction takes over
             if (this.target != null) {
-                // var collisionBox = this.body.getShape(0);
-                // var targetCollisionBox = this.target.body.getShape(0);
-
-                // this.myPath = me.astar.search(
-                //   this.collisionBox.left,
-                //   this.collisionBox.top,
-                //   this.target.collisionBox.left,
-                //   this.target.collisionBox.top);
-
-                // this.myPath = me.astar.search(
-                //   collisionBox.pos.x,
-                //   collisionBox.pos.y,
-                //   targetCollisionBox.pos.x,
-                //   targetCollisionBox.pos.y);
 
                 // use Entity.pos.x,y instead of body.pos and shape.pos
                   this.myPath = me.astar.search(
@@ -1179,15 +1168,22 @@ game.ChaserEntity = me.Entity.extend({
                     this.target.pos.x,
                     this.target.pos.y);
 
-
                 if (this.myPath) {
+                    for (var i =0; i < this.myPath.length; i++) {
+                      let graphNode = this.myPath[i];
+                      console.log("ChaserEntity: update: myPath[",i,"]: ",graphNode.x,",",graphNode.y);
+                    }
+
                     this.dest = this.myPath.pop();
-                    console.log("ChaserEntity: update: dest: ",this.dest.pos.x,",",this.dest.pos.y);
-                    console.log("ChaserEntity: update: pos: ",this.pos.x,",",this.pos.y);
+                    if (this.dest) {
+                      // console.log("ChaserEntity: update: dest: ",this.dest.pos.x,",",this.dest.pos.y);
+                      // console.log("ChaserEntity: update: pos: ",this.pos.x,",",this.pos.y);
+                    }
+
                 }
 
                 console.log("ChaserEntity: update: myPath.length: ",this.myPath.length);
-                // debugger;
+
 
                 this.pathAge = now;
                 //console.log(this.dest);
@@ -1222,6 +1218,29 @@ game.ChaserEntity = me.Entity.extend({
                 // TODO - do this with non constant, add some fuzz factor
                 console.log("Chaser: Reached "+this.dest.pos.x+","+this.dest.pos.y," myPath.length:",this.myPath.length);
                 this.dest = this.myPath.pop();
+
+                if (this.dest) {
+                  // console.log("Chaser: pos: ", this.pos.x,",",this.pos.y);
+                  // console.log("Chaser: next dest: ", this.dest.pos.x,",",this.dest.pos.y);
+                  // console.log("Chaser: next dest.rect: ", this.dest.rect.pos.x,",",this.dest.rect.pos.y,",",this.dest.rect.width,",",this.dest.rect.height);
+
+                  // console.log("check overlap: this.left: ",bodyBounds.left," dest.right: ",this.dest.rect.right);
+                  // console.log("check overlap: dest.left: ",this.dest.rect.left," this.right: ",bodyBounds.right);
+                  // console.log("check overlap: this.top: ",bodyBounds.top," dest.bottom: ",this.dest.rect.bottom);
+                  // console.log("check overlap: dest.top: ",this.dest.rect.top," this.bottom: ",bodyBounds.bottom);
+                }
+
+                // collision sanity check
+                // var candidates = me.collision.quadTree.retrieve(this.body, null);
+                // if (candidates.length > 0) {
+                //   console.log("Chaser: collision candidates at[]: ", candidates.length);
+                // }
+            }
+
+            if (this.myPath && this.myPath.length == 0) {
+              // STOP!!!
+              this.target = null;
+              this.reachedTarget = true;
             }
 
             if (this.dest != null) {
@@ -1235,29 +1254,33 @@ game.ChaserEntity = me.Entity.extend({
                   , ydiff = this.dest.pos.y - (this.pos.y + this.anchorPoint.y);
 
 
-                //console.log("Chaser: update: dest distance:",xdiff,",",ydiff);
+                if (this.debugLevel > 1) console.log("Chaser: update: dest distance:",xdiff,",",ydiff);
 
-                let distThreshold = 1;
+                let distThreshold = 2;
 
                 if (xdiff < (distThreshold * -1)) {
                     //this.body.vel.x -= this.body.accel.x * me.timer.tick;
-                    this.body.vel.x -= this.body.maxVel.x * me.timer.tick;
-                    this.lastPos.x = this.pos.x;
+                    // this.body.vel.x -= this.body.maxVel.x * me.timer.tick;
+                    this.body.force.x = -this.body.maxVel.x;
+                    // this.lastPos.x = this.pos.x;
                 } else if (xdiff > distThreshold) {
-                    this.flipX(true);
+                    // this.flipX(true);
                     //this.body.vel.x += this.body.accel.x * me.timer.tick;
-                    this.body.vel.x += this.body.maxVel.x * me.timer.tick;
-                    this.lastPos.x = this.pos.x;
+                    // this.body.vel.x += this.body.maxVel.x * me.timer.tick;
+                    this.body.force.x = this.body.maxVel.x;
+                    // this.lastPos.x = this.pos.x;
                 }
 
                 if (ydiff < (distThreshold * -1)) {
                     // this.body.vel.y -= this.body.accel.y * me.timer.tick;
-                    this.body.vel.y -= this.body.maxVel.y * me.timer.tick;
-                    this.lastPos.y = this.pos.y;
+                    // this.body.vel.y -= this.body.maxVel.y * me.timer.tick;
+                    this.body.force.y = -this.body.maxVel.y;
+                    // this.lastPos.y = this.pos.y;
                 } else if (ydiff > distThreshold) {
                     // this.body.vel.y += this.body.accel.y * me.timer.tick;
                     this.body.vel.y += this.body.maxVel.y * me.timer.tick;
-                    this.lastPos.y = this.pos.y;
+                    this.body.force.y = this.body.maxVel.y;
+                    // this.lastPos.y = this.pos.y;
                 }
             }
         }
@@ -1379,25 +1402,32 @@ game.ChaserEntity = me.Entity.extend({
      // collide with enemy_object (girl) and start dialouge
      //if (res && (obj.type == me.game.ENEMY_OBJECT)) {
      //if (res && (obj.type == me.collision.types.ENEMY_OBJECT)) {
-     if (res.b.body.collisionType === me.collision.types.ENEMY_OBJECT) {
 
+     if (res.b.body.collisionType === me.collision.types.PLAYER_OBJECT) {
+       if (this.debugLevel > 0) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name," id:",res.b.id);
        delete this._target;
+       this.target = null;
+       this.reachedTarget = true;
+       return true;
+     }
 
+     if (res.b.body.collisionType === me.collision.types.ENEMY_OBJECT) {
+       delete this._target;
        return true;
      }
 
      //if (res && obj.type == me.game.WORLD_SHAPE) {
      //if (res && obj.type == me.collision.types.WORLD_SHAPE) {
      if (res.b.body.collisionType === me.collision.types.WORLD_SHAPE) {
-       if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
+       if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name," id:",res.b.id);
 
        // debugger;
 
-       delete this._target;
+       // delete this._target;
 
        // bounce the entity away from the collision
-       this.pos.x -= this.body.vel.x;
-       this.pos.y -= this.body.vel.y;
+       // this.pos.x -= this.body.vel.x;
+       // this.pos.y -= this.body.vel.y;
 
        // this._setDirection( -res.x, -res.y );
        // this.renderable.setCurrentAnimation( this.direction );

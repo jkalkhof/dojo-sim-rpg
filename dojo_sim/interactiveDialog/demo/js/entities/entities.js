@@ -1,4 +1,4 @@
-//game.BaseEntity = me.ObjectEntity.extend({
+
 game.BaseEntity = me.Entity.extend({
 	/**
      * Set direction
@@ -1055,11 +1055,8 @@ game.ChaserEntity = me.Entity.extend({
 
         // chase even when offscreen
         this.alwaysUpdate = true;
-        // set the default horizontal & vertical speed (accel vector)
-        //this.setVelocity(0.25, 0.25);
-        // this.setMaxVelocity(3, 3);
-        //this.setFriction(0.05, 0.05);
 
+        // set the default horizontal & vertical speed (accel vector)
         this.body.force.set(0, 0);
         this.body.setVelocity(0.25,0.25);
         // this.body.setVelocity(0,0);
@@ -1077,8 +1074,6 @@ game.ChaserEntity = me.Entity.extend({
         this.isKinematic = false;
         // this.isKinematic = true;
 
-
-
         // adjust the bounding box
         // lower half SNES-RPG style
         console.log(this.collisionBox);
@@ -1093,12 +1088,6 @@ game.ChaserEntity = me.Entity.extend({
         );
 
         // create a new sprite object
-        // create a new sprite object
-        // this.renderable = texture.createAnimationFromName([9,10,11,
-        //   21,22,23,
-        //   33,34,35,
-        //   45,46,47]);
-
         this.renderable = texture.createAnimationFromName([
           0,1,2,3,4,5,6,7,8,9,10,11,
           12,13,14,15,16,17,18,19,20,21,22,23,
@@ -1111,6 +1100,8 @@ game.ChaserEntity = me.Entity.extend({
         this.renderable.addAnimation("up", [45,46,47]);
 
         this.direction = "down";
+        this.lastDirection = this.direction;
+        this.renderable.setCurrentAnimation( this.direction );
 
         // set the renderable position to bottom center
         // this.anchorPoint.set(0.5, 0.5);
@@ -1121,8 +1112,9 @@ game.ChaserEntity = me.Entity.extend({
 
     },
 
+    // return chessboard distance to target - for pathfinding
     chessboard: function() {
-        // return chessboard distance to target
+
         if (this.target) {
           var collisionBox = this.body.getShape(0);
           var targetCollisionBox = this.target.body.getShape(0);
@@ -1137,7 +1129,7 @@ game.ChaserEntity = me.Entity.extend({
     },
 
     /* -----
-    update the player pos
+    update the Entity pos
     ------ */
     update: function(dt) {
         var now = Date.now()
@@ -1151,10 +1143,12 @@ game.ChaserEntity = me.Entity.extend({
             console.log("ChaserEntity: update target: ", this.target.name);
         }
 
+        // chessboard distance
         var cbdist = this.chessboard();
 
-
-
+        // is the path valid?
+        // is chessboard distance too far?
+        // is the path too old?
         if (!this.myPath || this.myPath.length < 1 || (cbdist >= 96 && this.pathAge+5000 < now)) {
 
             // not moving anywhere
@@ -1190,7 +1184,7 @@ game.ChaserEntity = me.Entity.extend({
                 // debugger;
             }
         } else {
-          // var collisionBox = this.body.getShape(0);
+            // path is valid - proceed to next node in path (dest)
 
             // if (this.chessboard() < 96) {
             //     // just go for it
@@ -1207,34 +1201,29 @@ game.ChaserEntity = me.Entity.extend({
             // check overlaps
             let bodyBounds = new me.Rect(this.pos.x,this.pos.y,this.body.width,this.body.height);
 
-            // console.log("check overlap: this.left: ",bodyBounds.left," dest.right: ",this.dest.rect.right);
-            // console.log("check overlap: dest.left: ",this.dest.rect.left," this.right: ",bodyBounds.right);
-            // console.log("check overlap: this.top: ",bodyBounds.top," dest.bottom: ",this.dest.rect.bottom);
-            // console.log("check overlap: dest.top: ",this.dest.rect.top," this.bottom: ",bodyBounds.bottom);
+            if (this.debugLevel > 1) {
+              console.log("check overlap: this.left: ",bodyBounds.left," dest.right: ",this.dest.rect.right);
+              console.log("check overlap: dest.left: ",this.dest.rect.left," this.right: ",bodyBounds.right);
+              console.log("check overlap: this.top: ",bodyBounds.top," dest.bottom: ",this.dest.rect.bottom);
+              console.log("check overlap: dest.top: ",this.dest.rect.top," this.bottom: ",bodyBounds.bottom);
+            }
 
-
-            //if (this.body.overlaps(this.dest.rect) && this.myPath.length > 0) {
+            // reached path node - go to next node on path
             if (bodyBounds.overlaps(this.dest.rect) && this.myPath.length > 0) {
                 // TODO - do this with non constant, add some fuzz factor
                 console.log("Chaser: Reached "+this.dest.pos.x+","+this.dest.pos.y," myPath.length:",this.myPath.length);
                 this.dest = this.myPath.pop();
 
-                if (this.dest) {
-                  // console.log("Chaser: pos: ", this.pos.x,",",this.pos.y);
-                  // console.log("Chaser: next dest: ", this.dest.pos.x,",",this.dest.pos.y);
-                  // console.log("Chaser: next dest.rect: ", this.dest.rect.pos.x,",",this.dest.rect.pos.y,",",this.dest.rect.width,",",this.dest.rect.height);
+                if (this.dest && (this.debugLevel > 1)) {
+                  console.log("Chaser: pos: ", this.pos.x,",",this.pos.y);
+                  console.log("Chaser: next dest: ", this.dest.pos.x,",",this.dest.pos.y);
+                  console.log("Chaser: next dest.rect: ", this.dest.rect.pos.x,",",this.dest.rect.pos.y,",",this.dest.rect.width,",",this.dest.rect.height);
 
-                  // console.log("check overlap: this.left: ",bodyBounds.left," dest.right: ",this.dest.rect.right);
-                  // console.log("check overlap: dest.left: ",this.dest.rect.left," this.right: ",bodyBounds.right);
-                  // console.log("check overlap: this.top: ",bodyBounds.top," dest.bottom: ",this.dest.rect.bottom);
-                  // console.log("check overlap: dest.top: ",this.dest.rect.top," this.bottom: ",bodyBounds.bottom);
+                  console.log("check overlap: this.left: ",bodyBounds.left," dest.right: ",this.dest.rect.right);
+                  console.log("check overlap: dest.left: ",this.dest.rect.left," this.right: ",bodyBounds.right);
+                  console.log("check overlap: this.top: ",bodyBounds.top," dest.bottom: ",this.dest.rect.bottom);
+                  console.log("check overlap: dest.top: ",this.dest.rect.top," this.bottom: ",bodyBounds.bottom);
                 }
-
-                // collision sanity check
-                // var candidates = me.collision.quadTree.retrieve(this.body, null);
-                // if (candidates.length > 0) {
-                //   console.log("Chaser: collision candidates at[]: ", candidates.length);
-                // }
             }
 
             if (this.myPath && this.myPath.length == 0) {
@@ -1243,45 +1232,42 @@ game.ChaserEntity = me.Entity.extend({
               this.reachedTarget = true;
             }
 
+            // keep moving towards next node on path
             if (this.dest != null) {
 
                 // console.log("@",this.pos.x,this.pos.y);
                 // console.log("Moving toward ",this.dest.pos.x,this.dest.pos.y);
                 // move based on next position
 
-
                 var xdiff = this.dest.pos.x - (this.pos.x + this.anchorPoint.x)
                   , ydiff = this.dest.pos.y - (this.pos.y + this.anchorPoint.y);
-
 
                 if (this.debugLevel > 1) console.log("Chaser: update: dest distance:",xdiff,",",ydiff);
 
                 let distThreshold = 2;
 
                 if (xdiff < (distThreshold * -1)) {
-                    //this.body.vel.x -= this.body.accel.x * me.timer.tick;
-                    // this.body.vel.x -= this.body.maxVel.x * me.timer.tick;
                     this.body.force.x = -this.body.maxVel.x;
-                    // this.lastPos.x = this.pos.x;
+                    this.direction = "left";
                 } else if (xdiff > distThreshold) {
                     // this.flipX(true);
-                    //this.body.vel.x += this.body.accel.x * me.timer.tick;
-                    // this.body.vel.x += this.body.maxVel.x * me.timer.tick;
                     this.body.force.x = this.body.maxVel.x;
-                    // this.lastPos.x = this.pos.x;
+                    this.direction = "right";
                 }
 
                 if (ydiff < (distThreshold * -1)) {
-                    // this.body.vel.y -= this.body.accel.y * me.timer.tick;
-                    // this.body.vel.y -= this.body.maxVel.y * me.timer.tick;
                     this.body.force.y = -this.body.maxVel.y;
-                    // this.lastPos.y = this.pos.y;
+                    this.direction = "up";
                 } else if (ydiff > distThreshold) {
-                    // this.body.vel.y += this.body.accel.y * me.timer.tick;
-                    this.body.vel.y += this.body.maxVel.y * me.timer.tick;
                     this.body.force.y = this.body.maxVel.y;
-                    // this.lastPos.y = this.pos.y;
+                    this.direction = "down";
                 }
+
+                if (this.direction != this.lastDirection) {
+                    this.renderable.setCurrentAnimation( this.direction );
+                    this.lastDirection = this.direction;
+                }
+
             }
         }
 
@@ -1301,7 +1287,9 @@ game.ChaserEntity = me.Entity.extend({
 
     },
 
-    // draw: function(context) {
+    /*
+    draw debug pathfinding boxes and sprite
+    */
     draw: function(renderer, region) {
         renderer.save();
 
@@ -1392,9 +1380,7 @@ game.ChaserEntity = me.Entity.extend({
         renderer.restore();
     },
 
-
-
-    /**
+  /**
   * default on collision handler
   */
    onCollision : function (res, obj){

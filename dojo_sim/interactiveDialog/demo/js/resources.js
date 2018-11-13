@@ -9,6 +9,13 @@ game.resources = [
 	 {name: "Ship_A5", type:"image", src: "data/map/Ship_A5.png"},
 	 {name: "Ship_C", type:"image", src: "data/map/Ship_C.png"},
 
+	 /* Graphics. */
+	 // UI Texture
+	 { name: "UI_Assets",    type: "image",  src: "data/img/UI_Assets.png" },
+	 /* JSON Content. */
+	 // texturePacker Atlas
+	 { name: "UI_Assets",         type: "json",   src: "data/img/UI_Assets.json" },
+		
 	/* Atlases
 	 * @example
 	 * {name: "example_tps", type: "tps", src: "data/img/example_tps.json"},

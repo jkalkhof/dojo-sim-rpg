@@ -52,6 +52,13 @@ var game = {
 		me.debug.renderHitBox = true;
 		// note: When using the debug Panel, the sprite border is drawn in green,
 
+		// load the texture atlas file
+		// this will be used by object entities later
+		game.texture = new me.video.renderer.Texture(
+				me.loader.getJSON("UI_Assets"),
+				me.loader.getImage("UI_Assets")
+		);
+		
 		me.state.set(me.state.MENU, new game.TitleScreen());
 		me.state.set(me.state.PLAY, new game.PlayScreen());
 

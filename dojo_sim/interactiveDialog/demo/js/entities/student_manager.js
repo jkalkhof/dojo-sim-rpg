@@ -66,11 +66,17 @@ game.StudentManager = me.Container.extend({
         settings));
       //tempChild.name = "oldman-generated";
       tempChild.name = "student";
-      tempChild.id = this.totalStudents;
+
+      this.activeStudents += 1;
+      this.totalStudents += 1;
+      
+      // copy value
+      tempChild.id = JSON.parse(JSON.stringify(this.activeStudents));
+      // tempChild.id = this.totalStudents;
       // debugger;
 
-      this.totalStudents += 1;
-      this.activeStudents += 1;
+
+
     },
 
     removeStudent: function(tempStudent) {
@@ -82,13 +88,15 @@ game.StudentManager = me.Container.extend({
       this.activeStudents -= 1;
     },
 
-    getAvailablePosition: function() {
-      console.log("StudentManager: getAvailablePosition:", this.activeStudents );
+    getAvailablePosition: function(studentId) {
+      console.log("StudentManager: getAvailablePosition:", studentId);
 
       // 0,1,2,3,4
       // 5,6,7,8,9
-      var currentCol = (this.activeStudents -1 )% this.COLS;
-      var currentRow = Math.floor((this.activeStudents -1) / this.COLS);
+      var currentCol = (studentId -1 )% this.COLS;
+      var currentRow = Math.floor((studentId -1) / this.COLS);
+      // var currentCol = (this.activeStudents -1 )% this.COLS;
+      // var currentRow = Math.floor((this.activeStudents -1) / this.COLS);
 
       console.log("StudentManager: getAvailablePosition: row: ",currentRow," col: ",currentCol);
 
@@ -125,5 +133,47 @@ game.StudentManager = me.Container.extend({
 
         this._super(me.Container, "update", [time]);
         this.updateChildBounds();
-    }
+    },
+
+    onStudentAdded: function() {
+      console.log("StudentManager: onStudentAdded: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
+
+      if (this.activeStudents < 5) {
+        // wait for 2 sec - let the hero go away
+        var waitFor = 2000;
+        this.timer = me.timer.setTimeout(function () {
+          console.log("StudentManager: add new student");
+
+          // spawn a new student using studentManager after a random period of time...
+          // game.studentManager = me.game.world.getChildByName("studentManager")[0];
+          // game.studentManager.spawnStudent();
+          this.spawnStudent();
+
+          me.timer.clearInterval(this.timer);
+        }.bind(this), waitFor);
+      }
+
+    },
+
+    onStudentRemoved: function() {
+      console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
+
+      if (this.activeStudents < 5) {
+        // wait for 2 sec - let the hero go away
+        var waitFor = 2000;
+        this.timer = me.timer.setTimeout(function () {
+          console.log("StudentManager: add new student");
+
+          // spawn a new student using studentManager after a random period of time...
+          // game.studentManager = me.game.world.getChildByName("studentManager")[0];
+          // game.studentManager.spawnStudent();
+          this.spawnStudent();
+
+          me.timer.clearInterval(this.timer);
+        }.bind(this), waitFor);
+      }
+
+    },
+
+
 });

@@ -128,7 +128,7 @@ game.BaseEntity = me.Entity.extend({
 
               }
 
-              console.log("BaseEntity: update: myPath.length: ",this.myPath.length);
+              if (this.debugLevel > 1) console.log("BaseEntity: update: myPath.length: ",this.myPath.length);
 
               this.pathAge = now;
               //console.log(this.dest);
@@ -243,7 +243,14 @@ game.BaseEntity = me.Entity.extend({
         		this.body.vel.y = 0;
             this.body.setVelocity(0,0);
 
-            this.currentState = this.StateEnum.stopped;
+            if (this.currentState == this.StateEnum.movingToPosition) {
+              this.currentState = this.StateEnum.stoppedAtPosition;
+
+              game.studentManager.onStudentAdded();
+            } else {
+              this.currentState = this.StateEnum.stopped;
+            }
+
           }
       }
     },
@@ -371,14 +378,16 @@ game.BaseEntity = me.Entity.extend({
         } else if ((res.a.name == "hero") && (res.b.name == "student") && (res.b.currentState == res.b.StateEnum.stopped)) {
           if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
 
-          delete this._target;
+          // stops the hero from moving if colliding with student
+          // delete this._target;
 
-          // start conversation with girl entity
-          //this.doTalk( res.a );
-          if (!res.b.isTalking) {
+          // start conversation with entity
+          if (!res.b.isTalking && !res.a.talkWith) {
+            console.log("onCollision: ", res.b.name, " isTalking: ", res.b.isTalking);
             this.doTalk( res.b );
-            // this.doTalk( "student" );
             return false;
+          } else {
+            //console.log("onCollision: ", res.b.name, " isTalking: ", res.b.isTalking);
           }
         } else if ((res.a.name == "hero") && (res.b.name == "exit")) {
           // if (this.debugLevel > 1)
@@ -393,18 +402,7 @@ game.BaseEntity = me.Entity.extend({
           // spawn a new student using studentManager after a random period of time...
           game.studentManager = me.game.world.getChildByName("studentManager")[0];
           game.studentManager.removeStudent(this);
-
-          // wait for 2 sec - let the hero go away
-          var waitFor = 2000;
-          this.timer = me.timer.setTimeout(function () {
-            console.log("onCollision: add new student");
-
-            // spawn a new student using studentManager after a random period of time...
-            game.studentManager = me.game.world.getChildByName("studentManager")[0];
-            game.studentManager.spawnStudent();
-
-            me.timer.clearInterval(this.timer);
-        	}.bind(this), waitFor);
+          game.studentManager.onStudentRemoved();
 
           return false;
         } else if ((res.a.name == "student") && (res.b.name == "hero")) {
@@ -450,7 +448,7 @@ game.BaseEntity = me.Entity.extend({
      * @param {Object} entity
      */
     doTalk:function( entity ){
-      console.log("doTalk: ", entity.name);
+      console.log("doTalk: ", this.name," -> ", entity.name);
 
       if (entity.name == "girl") {
         entity.isTalking = true;
@@ -472,58 +470,61 @@ game.BaseEntity = me.Entity.extend({
 
       // check student conversation saved value
       if (this.name == "student") {
-        console.log("onDialogReset: ", this.name, " dialog.testrandom: ", this.dialog.testrandom);
-        console.log("onDialogReset: ", this.name, " dialog.signedup: ", this.dialog.signedup);
-        console.log("onDialogReset: ", this.name, " dialog.turnedaway: ", this.dialog.turnedaway);
+        // console.log("onDialogReset: ", this.name, " dialog.testrandom: ", this.dialog.testrandom);
+        console.log("onDialogReset: ", this.name, this.id, " dialog.signedup: ", this.dialog.signedup);
+        console.log("onDialogReset: ", this.name, this.id, " dialog.turnedaway: ", this.dialog.turnedaway);
 
-        if (this.dialog.turnedaway) {
-            //this.currentState = this.StateEnum.moving;
-            this.currentState = this.StateEnum.leaving;
+        if (this.currentState == this.StateEnum.stopped) {
+            if (this.dialog.turnedaway) {
+                //this.currentState = this.StateEnum.moving;
+                this.currentState = this.StateEnum.leaving;
 
-            // get position from game.StudentManager.exitChild .pos.x , pos.y
-            game.ExitEntity = me.game.world.getChildByName("exit")[0];
-            var exitPos = game.ExitEntity.pos;
+                // get position from game.StudentManager.exitChild .pos.x , pos.y
+                game.ExitEntity = me.game.world.getChildByName("exit")[0];
+                var exitPos = game.ExitEntity.pos;
 
-            if (this.renderable) {
-                this._setTargetPosition(exitPos);
+                if (this.renderable) {
+                    this._setTargetPosition(exitPos);
+                } else {
+                  console.log("onDialogReset: ", this.name, " renderable is undefined!");
+                }
+
+                this.isTalking = false;
+            } else if (this.dialog.signedup) {
+              this.currentState = this.StateEnum.movingToPosition;
+
+              // navigate back to target position
+              game.studentManager = me.game.world.getChildByName("studentManager")[0];
+              var studentPos = game.studentManager.getAvailablePosition(this.id);
+
+              this._setTargetPosition(studentPos);
+              this.isTalking = false;
+
             } else {
-              console.log("onDialogReset: ", this.name, " renderable is undefined!");
+              this.isTalking = false;
             }
-
-            this.isTalking = false;
-        } else if (this.dialog.signedup) {
-          this.currentState = this.StateEnum.movingToPosition;
+          }
 
           // spawn a new student using studentManager after a random period of time...
+        	// wait for 2 sec - let the hero go away
+        	var waitFor = 2000;
+        	window.setTimeout(function(){
+        		//delete this.isTalking;
+            this.isTalking = false;
+            console.log("onDialogReset: ", this.name, " isTalking: ", this.isTalking);
+        	}.bind(this), waitFor);
+
+        } else if (this.currentState == this.StateEnum.stoppedAtPosition) {
+          this.currentState = this.StateEnum.movingToPosition;
+
+          // navigate back to target position
           game.studentManager = me.game.world.getChildByName("studentManager")[0];
           var studentPos = game.studentManager.getAvailablePosition(this.id);
 
           this._setTargetPosition(studentPos);
           this.isTalking = false;
-
-          // wait for 2 sec - let the hero go away
-          var waitFor = 2000;
-          this.timer = me.timer.setTimeout(function () {
-            console.log("onDialogReset: add new student");
-
-            // spawn a new student using studentManager after a random period of time...
-            game.studentManager = me.game.world.getChildByName("studentManager")[0];
-            game.studentManager.spawnStudent();
-
-            me.timer.clearInterval(this.timer);
-        	}.bind(this), waitFor);
-        } else {
-          this.isTalking = false;
         }
-      }
 
-    	// wait for 2 sec - let the hero go away
-    	var waitFor = 2000;
-    	window.setTimeout(function(){
-    		//delete this.isTalking;
-        this.isTalking = false;
-        console.log("onDialogReset: ", this.name, " isTalking: ", this.isTalking);
-    	}.bind(this), waitFor);
     },
 
     onDialogShow:function( event ){
@@ -584,7 +585,7 @@ game.HeroEntity = game.BaseEntity.extend({
         // this.gravity = 0;
         this.body.gravity = new me.Vector2d(0,0);
 
-        this.debugLevel = 1;
+        this.debugLevel = 0;
 
         // set the default horizontal & vertical speed (accel vector)
         // walking & jumping speed
@@ -728,9 +729,9 @@ game.HeroEntity = game.BaseEntity.extend({
       if (this.debugLevel > 1) console.log("onMouseDown: body.vel: ", Number(this.body.vel.x).toFixed(2), Number(this.body.vel.y).toFixed(2));
       if (this.debugLevel > 1) console.log("onMouseDown: body.accel: ", Number(this.body.accel.x).toFixed(2), Number(this.body.accel.y).toFixed(2));
       if (this.debugLevel > 1) console.log("onMouseDown: body.pos: ", Number(this.body.pos.x).toFixed(2), Number(this.body.pos.y).toFixed(2));
-      console.log("onMouseDown: pos: ", Number(this.pos.x).toFixed(2), Number(this.pos.y).toFixed(2));
+      if (this.debugLevel > 0) console.log("onMouseDown: pos: ", Number(this.pos.x).toFixed(2), Number(this.pos.y).toFixed(2));
       if (this.debugLevel > 1) console.log("onMouseDown: pos: ", Number(this.pos.x).toFixed(2), Number(this.pos.y).toFixed(2));
-      console.log("onMouseDown: target: ", Number(this._target.x).toFixed(2), Number(this._target.y).toFixed(2));
+      if (this.debugLevel > 0) console.log("onMouseDown: target: ", Number(this._target.x).toFixed(2), Number(this._target.y).toFixed(2));
       if (this.debugLevel > 1) console.log("onMouseDown: ", this.direction);
     	this.renderable.setCurrentAnimation( this.direction );
 
@@ -1063,10 +1064,13 @@ game.StudentEntity = game.BaseEntity.extend({
             this.onDialogShow.bind(this),
             this.onSpriteLookup.bind(this));
 
-        this.StateEnum = Object.freeze({"stopped":1, "moving":2, "leaving":3, "movingToPosition":4});
+        this.StateEnum = Object.freeze({"stopped":1, "moving":2, "leaving":3, "movingToPosition":4, "stoppedAtPosition":5});
 
         this.currentState = this.StateEnum.stopped;
         // this.currentState = this.StateEnum.moving;
+
+        // conversation dialogue
+        this.isTalking = false;
 
         // pathfinding variables
         this.target = null;
@@ -1076,6 +1080,36 @@ game.StudentEntity = game.BaseEntity.extend({
         this.pathAge = 0;
         this.reachedTarget = false;
         this.lastDirection = this.direction;
+
+        // create timeout for signedup or turnedaway dialog result
+        // wait for 2 sec - let the hero go away
+        var waitFor = 10000;
+        this.timer = me.timer.setTimeout(function () {
+          console.log("Student:",this.name,this.id," leave check timeout");
+
+          if (this.isTalking) {
+            console.log("Student: leave check timeout: ",this.name,this.id," isTalking");
+          } else {
+            if (this.dialog.signedup) {
+              console.log("Student: leave check timeout: ",this.name,this.id," signedup");
+            } else if (this.dialog.turnedaway) {
+              console.log("Student: leave check timeout: ",this.name,this.id," turnedaway");
+            } else {
+              console.log("Student: leave check timeout: ",this.name,this.id," not signedup or turnedaway");
+
+              this.currentState = this.StateEnum.leaving;
+
+              // get position from game.StudentManager.exitChild .pos.x , pos.y
+              game.ExitEntity = me.game.world.getChildByName("exit")[0];
+              var exitPos = game.ExitEntity.pos;
+              this._setTargetPosition(exitPos);
+            }
+          }
+
+
+          me.timer.clearInterval(this.timer);
+        }.bind(this), waitFor);
+
     },
 
     createRenderable: function() {
@@ -1176,11 +1210,13 @@ game.StudentEntity = game.BaseEntity.extend({
     update: function(dt) {
 
         //if (!this._target && (this.currentState != this.StateEnum.stopped)) {
-        if (!this._target && (this.currentState == this.StateEnum.moving)) {
-       		this._setRandomTargetPosition();
-        }
+        // if (!this._target && (this.currentState == this.StateEnum.moving)) {
+       	// 	this._setRandomTargetPosition();
+        // }
 
-        if(!this.isTalking && (this.currentState != this.StateEnum.stopped)) {
+        if(!this.isTalking &&
+          (this.currentState != this.StateEnum.stopped) &&
+          (this.currentState != this.StateEnum.stoppedAtPosition)) {
         	// this._calculateStep(dt);
           this._calculateStepPathfinding(dt);
         } else {

@@ -13,6 +13,14 @@ game.StudentManager = me.Container.extend({
 
         this.totalStudents = 0;
         this.activeStudents = 0;
+
+        this.savings = 5000;
+        this.currentMonth = 0;
+        this.dojoSkillLevel = 0;
+
+        // dictionary to keep track of active students
+        // this.studentDict = {};
+        this.studentMap = new Map();
     },
 
     createEnemies: function () {
@@ -66,15 +74,84 @@ game.StudentManager = me.Container.extend({
         settings));
       //tempChild.name = "oldman-generated";
       tempChild.name = "student";
+      tempChild.startMonth = this.currentMonth;
 
       this.activeStudents += 1;
       this.totalStudents += 1;
-      
+
       // copy value
+      //tempChild.id = JSON.parse(JSON.stringify(this.activeStudents+1));
       tempChild.id = JSON.parse(JSON.stringify(this.activeStudents));
       // tempChild.id = this.totalStudents;
       // debugger;
 
+
+      // 5 students per month as period
+      if ((this.totalStudents % 5) == 0) {
+        this.currentMonth += 1;
+        // take out rent
+        this.savings -= 1000;
+        // add student fees
+        this.savings += (this.activeStudents * 150);
+
+        // game over if savings < 0
+        game.timePanel = me.game.world.getChildByName("timePanel")[0];
+        if (game.timePanel) game.timePanel.setText("Time: "+this.currentMonth);
+      }
+
+
+      if (this.totalStudents >= 1) {
+        game.savingsPanel = me.game.world.getChildByName("savingsPanel")[0];
+        if (game.savingsPanel) game.savingsPanel.setText("Savings: "+this.savings);
+      }
+
+      // show entities in level
+      // for (var i = 0; i < me.game.world.children.length; i++) {
+      //     var levelChild = me.game.world.children[i];
+      //     console.log("StudentManager: world(",i,"): ", levelChild.name);
+      // }
+
+      // this.studentDict[tempChild.id] = tempChild;
+      // var totalSkillValues = 0;
+      // for(var key in this.studentDict) {
+      //   var value = this.studentDict[key];
+      //   if (value != null) {
+      //     // do something with "key" and "value" variables
+      //     let skillLevel = this.currentMonth - value.startMonth;
+      //     totalSkillValues += skillLevel;
+      //     console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
+      //       " startMonth:", value.startMonth,
+      //       " skillLevel:", skillLevel);
+      //   }
+      // }
+
+      // store studentData object instead of melonjs Entity type?
+      var studentData = new Object();
+      studentData.name = tempChild.name;
+      studentData.id = tempChild.id;
+      studentData.startMonth = tempChild.startMonth;
+
+      this.studentMap.set(tempChild.id, studentData);
+      var totalSkillValues = 0;
+      //for (var [key, value] of this.studentMap) {
+      for (var [key, value] of this.studentMap.entries()) {
+        let skillLevel = this.currentMonth - value.startMonth;
+        totalSkillValues += skillLevel;
+        console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
+          " startMonth:", value.startMonth,
+          " skillLevel:", skillLevel);
+
+        if (key < 0) {
+          debugger;
+        }
+
+      }
+
+      // integer value
+      //this.dojoSkillLevel = ~~(totalSkillValues / this.activeStudents);
+      this.dojoSkillLevel = (totalSkillValues / this.activeStudents);
+      game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
+      if (game.dojoSkillPanel) game.dojoSkillPanel.setText("Dojo Skill: "+Number(this.dojoSkillLevel).toFixed(2));
 
 
     },
@@ -82,10 +159,28 @@ game.StudentManager = me.Container.extend({
     removeStudent: function(tempStudent) {
       console.log("StudentManager: removeStudent:", tempStudent.id);
 
-      // remove it - student leaves through exit
-      me.game.world.removeChild(tempStudent);
+      // https://stackoverflow.com/questions/10822971/how-to-check-whether-a-javascript-object-has-a-value-for-a-given-key
+      // https://stackoverflow.com/questions/346021/how-do-i-remove-objects-from-a-javascript-associative-array
+      // some nasty overflow
+      // if (tempStudent.id in this.studentDict) {
+      //     delete this.studentDict[tempStudent.id];
+      // }
 
-      this.activeStudents -= 1;
+      // if (tempStudent.id in this.studentDict) {
+      //     //this.studentDict[tempStudent.id] = undefined;
+      //     this.studentDict[tempStudent.id] = null;
+      // }
+
+      // this function may be called multiple times in a row, so have a sanity check
+      if (this.studentMap.has(tempStudent.id)) {
+          this.studentMap.delete(tempStudent.id);
+
+          // remove it - student leaves through exit
+          me.game.world.removeChild(tempStudent);
+
+          this.activeStudents -= 1;
+      }
+
     },
 
     getAvailablePosition: function(studentId) {
@@ -95,8 +190,6 @@ game.StudentManager = me.Container.extend({
       // 5,6,7,8,9
       var currentCol = (studentId -1 )% this.COLS;
       var currentRow = Math.floor((studentId -1) / this.COLS);
-      // var currentCol = (this.activeStudents -1 )% this.COLS;
-      // var currentRow = Math.floor((this.activeStudents -1) / this.COLS);
 
       console.log("StudentManager: getAvailablePosition: row: ",currentRow," col: ",currentCol);
 
@@ -138,40 +231,42 @@ game.StudentManager = me.Container.extend({
     onStudentAdded: function() {
       console.log("StudentManager: onStudentAdded: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
-      if (this.activeStudents < 5) {
+      // game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
+      // game.dojoSkillPanel.setText("DojoSkill:"+this.activeStudents);
+
+      game.studentsPanel = me.game.world.getChildByName("studentsPanel")[0];
+      game.studentsPanel.setText("Students: "+this.activeStudents);
+
+      // if (this.activeStudents < 5) {
         // wait for 2 sec - let the hero go away
         var waitFor = 2000;
         this.timer = me.timer.setTimeout(function () {
           console.log("StudentManager: add new student");
 
           // spawn a new student using studentManager after a random period of time...
-          // game.studentManager = me.game.world.getChildByName("studentManager")[0];
-          // game.studentManager.spawnStudent();
           this.spawnStudent();
 
-          me.timer.clearInterval(this.timer);
+          me.timer.clearTimeout(this.timer);
         }.bind(this), waitFor);
-      }
+      // }
 
     },
 
     onStudentRemoved: function() {
       console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
-      if (this.activeStudents < 5) {
+      // if (this.activeStudents < 5) {
         // wait for 2 sec - let the hero go away
         var waitFor = 2000;
         this.timer = me.timer.setTimeout(function () {
           console.log("StudentManager: add new student");
 
           // spawn a new student using studentManager after a random period of time...
-          // game.studentManager = me.game.world.getChildByName("studentManager")[0];
-          // game.studentManager.spawnStudent();
           this.spawnStudent();
 
-          me.timer.clearInterval(this.timer);
+          me.timer.clearTimeout(this.timer);
         }.bind(this), waitFor);
-      }
+      // }
 
     },
 

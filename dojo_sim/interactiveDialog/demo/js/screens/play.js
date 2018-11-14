@@ -33,43 +33,33 @@ game.PlayScreen = me.ScreenObject.extend({
 
 		var panel = new game.UI.Container(xpos, ypos, width, height, "Dojo Sim");
 
-		// add a few checkbox
-		panel.addChild(new game.UI.CheckBoxUI(
-				50, 75,
-				game.texture,
-				"green_boxCheckmark",
-				"grey_boxCheckmark",
-				"Music ON", // default
-				"Music OFF"
-		));
+		var dojoSkillPanel = new game.UI.TextUI(
+				30, 75, (width * 0.7),50,
+				"Dojo Skill: "+this.studentManager.dojoSkillLevel
+		);
+		dojoSkillPanel.name = "dojoSkillPanel";
+		panel.addChild(dojoSkillPanel);
 
-		panel.addChild(new game.UI.CheckBoxUI(
-				50, 125,
-				game.texture,
-				"green_boxCheckmark",
-				"grey_boxCheckmark",
-				"Sound FX ON", // default
-				"Sound FX OFF"
-		));
+		var studentsPanel = new game.UI.TextUI(
+				30, 125, (width * 0.7),50,
+				"Students:"
+		);
+		studentsPanel.name = "studentsPanel";
+		panel.addChild(studentsPanel);
 
-		// a few buttons
-		panel.addChild(new game.UI.ButtonUI(
-				50, 175,
-				"blue",
-				"Video Options"
-		));
+		var savingsPanel = new game.UI.TextUI(
+				30, 175, (width * 0.7),50,
+				"Savings: "+this.studentManager.savings
+		);
+		savingsPanel.name = "savingsPanel";
+		panel.addChild(savingsPanel);
 
-		panel.addChild(new game.UI.ButtonUI(
-				30, 250,
-				"green",
-				"Accept"
-		));
-
-		// panel.addChild(new game.UI.ButtonUI(
-		// 		230, 250,
-		// 		"yellow",
-		// 		"Cancel"
-		// ));
+		var timePanel = new game.UI.TextUI(
+				30, 225, (width * 0.7),50,
+				"Time: "+this.studentManager.currentMonth
+		);
+		timePanel.name = "timePanel";
+		panel.addChild(timePanel);
 
 		// add the panel to word (root) container
 		me.game.world.addChild(panel, 1);

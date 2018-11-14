@@ -390,13 +390,14 @@ game.BaseEntity = me.Entity.extend({
             //console.log("onCollision: ", res.b.name, " isTalking: ", res.b.isTalking);
           }
         } else if ((res.a.name == "hero") && (res.b.name == "exit")) {
-          // if (this.debugLevel > 1)
-          console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
+          if (this.debugLevel > 1) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
           return false;
         } else if ((res.a.name == "student") && (res.b.name == "exit") && (res.a.currentState == res.a.StateEnum.leaving)) {
 
           if (this.debugLevel > 0) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
 
+          res.a.collidable = false;
+          res.a.collisionType = me.collision.types.NO_OBJECT;
           delete this._target;
 
           // spawn a new student using studentManager after a random period of time...

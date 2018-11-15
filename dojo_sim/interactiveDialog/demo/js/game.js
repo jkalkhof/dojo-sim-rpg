@@ -5,7 +5,9 @@ var game = {
 	// an object where to store game information
 	data : {
 		// score
-		score : 0
+		score : 0,
+		savings : 0,
+		dojoSkillLevel : 0
 	},
 
 	// Run on page load.
@@ -75,8 +77,19 @@ var game = {
 		me.pool.register("spawn", game.SpawnEntity);
 		me.pool.register("chaser", game.ChaserEntity);
 
+		// User interface components
+		me.pool.register("UIContainer", game.UI.Container);
+		me.pool.register("UICheckBox", game.UI.CheckBoxUI);
+		me.pool.register("UIButton", game.UI.ButtonUI);
+		me.pool.register("UITextBox", game.UI.TextUI);
+
 		// Start the game.
 		//me.state.change(me.state.PLAY);
+
+		// testing the end state/ gameover screens
+		//me.state.set(me.state.MENU, new MenuScreen());
+
+		// go to the menu, then start play 
 		me.state.change(me.state.MENU);
 
 	}

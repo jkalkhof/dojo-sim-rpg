@@ -246,7 +246,7 @@ game.BaseEntity = me.Entity.extend({
             if (this.currentState == this.StateEnum.movingToPosition) {
               this.currentState = this.StateEnum.stoppedAtPosition;
 
-              game.studentManager.onStudentAdded();
+              game.studentManager.onStudentAdded(this);
             } else {
               this.currentState = this.StateEnum.stopped;
             }
@@ -394,11 +394,13 @@ game.BaseEntity = me.Entity.extend({
           return false;
         } else if ((res.a.name == "student") && (res.b.name == "exit") && (res.a.currentState == res.a.StateEnum.leaving)) {
 
-          if (this.debugLevel > 0) console.log("onCollision(",this.name,"): a:",res.a.name," b:",res.b.name);
+          if (this.debugLevel > 0) console.log("onCollision(",this.name,this.id,"): a:",res.a.name," b:",res.b.name);
 
           res.a.collidable = false;
           res.a.collisionType = me.collision.types.NO_OBJECT;
           delete this._target;
+
+          this.collidable = false;
 
           // spawn a new student using studentManager after a random period of time...
           game.studentManager = me.game.world.getChildByName("studentManager")[0];
@@ -744,7 +746,8 @@ game.HeroEntity = game.BaseEntity.extend({
     },
 
     onDestroyEvent : function() {
-		    me.input.releasePointerEvent('mousedown', me.game.viewport);
+		    // me.input.releasePointerEvent('mousedown', me.game.viewport);
+        me.input.releasePointerEvent('pointerdown', me.game.viewport);        
     },
 });
 

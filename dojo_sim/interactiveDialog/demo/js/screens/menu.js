@@ -1,27 +1,19 @@
-
-
 /** menu **/
 var MenuButton = me.GUI_Object.extend({
     onResetEvent: function() {
       console.log("MenuButton: onResetEvent");
-
     },
 
     "onClick" : function () {
         console.log("MenuButton: onClick");
-
 				// Change to the PLAY state when the button is clicked
         me.state.change(me.state.PLAY);
-
-
         return true;
     }
 });
 
 var MenuScreen = me.ScreenObject.extend({
-
 		addPanelSprite : function() {
-
 			// me.Renderable -> me.Sprite
 			// back panel sprite
 			this.panelSprite = game.texture.createSpriteFromName("grey_panel");
@@ -39,7 +31,6 @@ var MenuScreen = me.ScreenObject.extend({
 			console.log("MenuScreen: panelSprite: scale: ", xScale, yScale);
 			console.log("MenuScreen: panelSprite: position: ", this.panelSprite.pos.x, this.panelSprite.pos.y);
 			console.log("MenuScreen: panelSprite: size: ", this.panelSprite.width, this.panelSprite.height);
-
 
       // me.game.world.addChild(this.panelSprite, 0);
 		},
@@ -63,7 +54,6 @@ var MenuScreen = me.ScreenObject.extend({
 					image : menuImage,
 					z: 0 // z-index
 			});
-
 
 			// Load background image
 			// me.container -> me.game.world
@@ -107,7 +97,13 @@ var MenuScreen = me.ScreenObject.extend({
               // this.font.textBaseline = "top";
               // this.font.bold();
 
-              this.synopsisText = 'Congratulations!  You achieved all of the mission objectives.';
+              // TODO: check if win or lose condition from game data?
+              if (game.data.savings >= 0) {
+                  this.synopsisText = 'Congratulations!  You achieved all of the mission objectives.';
+              } else {
+                  this.synopsisText = 'Oh no!  You ran out of money and your dojo was closed.';
+              }
+
 
           },
 
@@ -139,7 +135,7 @@ var MenuScreen = me.ScreenObject.extend({
                       renderer,
                       strToRender, // label
                       me.game.viewport.width/2,
-                      me.game.viewport.height*.3  + (currentLineIndex * textMeasure.height));
+                      me.game.viewport.height*.4  + (currentLineIndex * textMeasure.height));
                       //me.game.viewport.height/2 + (currentLineIndex * textMeasure.height));
 
                   currentLineIndex += 1;
@@ -185,15 +181,27 @@ var MenuScreen = me.ScreenObject.extend({
 				// buttons don't work when uicontainer in flaot mode!
 				let buttonWidth = 190; // me.game.viewport.width * .1; //100;
 				let buttonHeight = 49; //me.game.viewport.height * .1; //50;
-				var uiButton = me.pool.pull("UIButton",
+
+        // old UIButton
+        // (x, y, color, label)
+        var uiButton = me.pool.pull("UIButton",
 						me.game.viewport.width/2 - (buttonWidth/2),
 						me.game.viewport.height * .8,
-						buttonWidth, // getWidth
-						buttonHeight, // height
 	          "green",
-	          "Restart",
-	          this.onClick.bind(this)
-	      );
+	          "Restart"
+        );
+
+        // new uiButton
+        // (x, y, width, height, color, label, clickCallback)
+				// var uiButton = me.pool.pull("UIButton",
+				// 		me.game.viewport.width/2 - (buttonWidth/2),
+				// 		me.game.viewport.height * .8,
+				// 		buttonWidth, // getWidth
+				// 		buttonHeight, // height
+	      //     "green",
+	      //     "Restart",
+	      //     this.onClick.bind(this)
+	      // );
 				uiButton.floating = true;
 
 	      me.game.world.addChild(uiButton);

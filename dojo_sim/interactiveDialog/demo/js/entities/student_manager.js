@@ -7,6 +7,7 @@ game.StudentManager = me.Container.extend({
 
         this._super(me.Container, "init", [0, 32, this.COLS * 64 - 32, this.ROWS * 64 - 32]);
 
+        this.debugLevel = 1;
         this.vel = 16;
 
         console.log("StudentManager: init");
@@ -14,17 +15,24 @@ game.StudentManager = me.Container.extend({
         this.totalStudents = 0;
         this.activeStudents = 0;
 
-        this.savings = 5000;
+        this.savings = 2000;
         this.currentMonth = 0;
         this.dojoSkillLevel = 0;
+
+        // reset the score
+        game.data.score = 0;
+        game.data.savings = this.savings;
+        game.data.dojoSkillLevel = this.dojoSkillLevel;
 
         // dictionary to keep track of active students
         // this.studentDict = {};
         this.studentMap = new Map();
+
+        this.timer = null;
     },
 
     createEnemies: function () {
-        console.log("StudentManager: createEnemies");
+        if (this.debugLevel > 0) console.log("StudentManager: createEnemies");
 
         settings = {width: 32, height: 32};
 
@@ -60,7 +68,7 @@ game.StudentManager = me.Container.extend({
     },
 
     spawnStudent: function() {
-      console.log("StudentManager: spawnStudent: id: ", this.totalStudents);
+      if (this.debugLevel > 0) console.log("StudentManager: spawnStudent: id: ", this.totalStudents);
 
       // get position from spawn point in level - .pos.x , pos.y
       game.spawnEntity = me.game.world.getChildByName("spawn")[0];
@@ -76,12 +84,13 @@ game.StudentManager = me.Container.extend({
       tempChild.name = "student";
       tempChild.startMonth = this.currentMonth;
 
-      this.activeStudents += 1;
+      //this.activeStudents += 1;
       this.totalStudents += 1;
 
       // copy value
-      //tempChild.id = JSON.parse(JSON.stringify(this.activeStudents+1));
-      tempChild.id = JSON.parse(JSON.stringify(this.activeStudents));
+      //tempChild.id = JSON.parse(JSON.stringify(this.totalStudents));
+      tempChild.id = JSON.parse(JSON.stringify(this.activeStudents+1));
+      // tempChild.id = JSON.parse(JSON.stringify(this.activeStudents));
       // tempChild.id = this.totalStudents;
       // debugger;
 
@@ -93,6 +102,25 @@ game.StudentManager = me.Container.extend({
         this.savings -= 1000;
         // add student fees
         this.savings += (this.activeStudents * 150);
+
+        if (this.savings < 0) {
+        //if (this.savings < 2000) { // test end game
+          game.dojosimPanel = me.game.world.getChildByName("dojosimPanel")[0];
+          me.game.world.removeChild(game.dojosimPanel);
+
+          // copy to game.data globals
+          game.data.savings = this.savings;
+          // game.data.savings = -1; // test end game
+          game.data.dojoSkillLevel = this.dojoSkillLevel;
+
+          // switch to menu state and display menu screen
+          me.state.set(me.state.GAMEOVER, new MenuScreen());
+          //me.state.set(me.state.MENU, new game.MenuScreen());
+          me.state.change(me.state.GAMEOVER);
+        }
+
+        // TODO: winning game state
+        // game over if skill level > 4 before 12 months
 
         // game over if savings < 0
         game.timePanel = me.game.world.getChildByName("timePanel")[0];
@@ -125,15 +153,9 @@ game.StudentManager = me.Container.extend({
       //   }
       // }
 
-      // store studentData object instead of melonjs Entity type?
-      var studentData = new Object();
-      studentData.name = tempChild.name;
-      studentData.id = tempChild.id;
-      studentData.startMonth = tempChild.startMonth;
 
-      this.studentMap.set(tempChild.id, studentData);
       var totalSkillValues = 0;
-      //for (var [key, value] of this.studentMap) {
+
       for (var [key, value] of this.studentMap.entries()) {
         let skillLevel = this.currentMonth - value.startMonth;
         totalSkillValues += skillLevel;
@@ -144,7 +166,6 @@ game.StudentManager = me.Container.extend({
         if (key < 0) {
           debugger;
         }
-
       }
 
       // integer value
@@ -157,7 +178,7 @@ game.StudentManager = me.Container.extend({
     },
 
     removeStudent: function(tempStudent) {
-      console.log("StudentManager: removeStudent:", tempStudent.id);
+      if (this.debugLevel > 1) console.log("StudentManager: removeStudent:", tempStudent.id);
 
       // https://stackoverflow.com/questions/10822971/how-to-check-whether-a-javascript-object-has-a-value-for-a-given-key
       // https://stackoverflow.com/questions/346021/how-do-i-remove-objects-from-a-javascript-associative-array
@@ -174,12 +195,11 @@ game.StudentManager = me.Container.extend({
       // this function may be called multiple times in a row, so have a sanity check
       if (this.studentMap.has(tempStudent.id)) {
           this.studentMap.delete(tempStudent.id);
-
-          // remove it - student leaves through exit
-          me.game.world.removeChild(tempStudent);
-
           this.activeStudents -= 1;
       }
+
+      // remove it - student leaves through exit
+      me.game.world.removeChild(tempStudent);
 
     },
 
@@ -228,8 +248,20 @@ game.StudentManager = me.Container.extend({
         this.updateChildBounds();
     },
 
-    onStudentAdded: function() {
-      console.log("StudentManager: onStudentAdded: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
+    onStudentAdded: function(tempStudent) {
+      if (this.debugLevel > 0) console.log("StudentManager: onStudentAdded: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
+
+      if (!this.studentMap.has(tempStudent.id)) {
+        this.activeStudents += 1;
+
+        // store studentData object instead of melonjs Entity type?
+        var studentData = new Object();
+        studentData.name = tempStudent.name;
+        studentData.id = tempStudent.id;
+        studentData.startMonth = tempStudent.startMonth;
+
+        this.studentMap.set(tempStudent.id, studentData);
+      }
 
       // game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
       // game.dojoSkillPanel.setText("DojoSkill:"+this.activeStudents);
@@ -237,9 +269,10 @@ game.StudentManager = me.Container.extend({
       game.studentsPanel = me.game.world.getChildByName("studentsPanel")[0];
       game.studentsPanel.setText("Students: "+this.activeStudents);
 
-      // if (this.activeStudents < 5) {
+      if (this.timer == null) {
         // wait for 2 sec - let the hero go away
         var waitFor = 2000;
+
         this.timer = me.timer.setTimeout(function () {
           console.log("StudentManager: add new student");
 
@@ -247,17 +280,19 @@ game.StudentManager = me.Container.extend({
           this.spawnStudent();
 
           me.timer.clearTimeout(this.timer);
+          this.timer = null;
         }.bind(this), waitFor);
-      // }
-
+      }
     },
 
     onStudentRemoved: function() {
-      console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
-      // if (this.activeStudents < 5) {
+      if (this.timer == null) {
         // wait for 2 sec - let the hero go away
         var waitFor = 2000;
+
+        if (this.debugLevel > 0) console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
+
         this.timer = me.timer.setTimeout(function () {
           console.log("StudentManager: add new student");
 
@@ -265,9 +300,9 @@ game.StudentManager = me.Container.extend({
           this.spawnStudent();
 
           me.timer.clearTimeout(this.timer);
+          this.timer = null;
         }.bind(this), waitFor);
-      // }
-
+      } // otherwise timer is already active
     },
 
 

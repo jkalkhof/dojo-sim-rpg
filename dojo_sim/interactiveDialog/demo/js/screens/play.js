@@ -32,6 +32,7 @@ game.PlayScreen = me.ScreenObject.extend({
 		console.log("PlayScreen: UIContainer: pos: ",xpos, ypos);
 
 		var panel = new game.UI.Container(xpos, ypos, width, height, "Dojo Sim");
+		panel.name = "dojosimPanel";
 
 		var dojoSkillPanel = new game.UI.TextUI(
 				30, 75, (width * 0.7),50,

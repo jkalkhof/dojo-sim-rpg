@@ -58,7 +58,7 @@ var game = {
 				me.loader.getJSON("UI_Assets"),
 				me.loader.getImage("UI_Assets")
 		);
-		
+
 		me.state.set(me.state.MENU, new game.TitleScreen());
 		me.state.set(me.state.PLAY, new game.PlayScreen());
 
@@ -76,7 +76,8 @@ var game = {
 		me.pool.register("chaser", game.ChaserEntity);
 
 		// Start the game.
-		me.state.change(me.state.PLAY);
+		//me.state.change(me.state.PLAY);
+		me.state.change(me.state.MENU);
 
 	}
 };

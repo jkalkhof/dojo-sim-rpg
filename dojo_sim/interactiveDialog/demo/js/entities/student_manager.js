@@ -28,7 +28,26 @@ game.StudentManager = me.Container.extend({
         // this.studentDict = {};
         this.studentMap = new Map();
 
+        this.studentTypeEnum = Object.freeze({"dabbler":0, "obsessive":1, "hacker":2, "balanced":3, "unknown":4});
+
         this.timer = null;
+
+        if (this.timer == null) {
+          // wait for 2 sec - let the hero go away
+          var waitFor = 12000;
+
+          //this.timer = me.timer.setTimeout(function () {
+          this.timer = me.timer.setInterval(function () {
+            console.log("StudentManager: add new student");
+
+            // spawn a new student using studentManager after a random period of time...
+            this.spawnStudent();
+
+            //me.timer.clearTimeout(this.timer);
+            //this.timer = null;
+          }.bind(this), waitFor);
+        } // otherwise timer is already active
+
     },
 
     createEnemies: function () {
@@ -161,7 +180,14 @@ game.StudentManager = me.Container.extend({
         totalSkillValues += skillLevel;
         console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
           " startMonth:", value.startMonth,
-          " skillLevel:", skillLevel);
+          " skillLevel:", skillLevel,
+          " studentType:", this.studentTypeToStr(value.studentType));
+
+        //if (value.studentType == this.studentTypeEnum.dabbler) {
+        //if (value.studentType != this.studentTypeEnum.balanced) {
+        if ((value.studentType != this.studentTypeEnum.balanced) && (skillLevel > 0)) {
+            value.entity.onMakeLeave();
+        }
 
         if (key < 0) {
           debugger;
@@ -196,6 +222,9 @@ game.StudentManager = me.Container.extend({
       if (this.studentMap.has(tempStudent.id)) {
           this.studentMap.delete(tempStudent.id);
           this.activeStudents -= 1;
+
+          game.studentsPanel = me.game.world.getChildByName("studentsPanel")[0];
+          game.studentsPanel.setText("Students: "+this.activeStudents);
       }
 
       // remove it - student leaves through exit
@@ -230,7 +259,11 @@ game.StudentManager = me.Container.extend({
     },
 
     onDeactivateEvent: function () {
-        //me.timer.clearInterval(this.timer);
+        if (this.debugLevel > 0) console.log("StudentManager: onDeactivateEvent")
+        if (this.timer != null) {
+          me.timer.clearInterval(this.timer);
+        }
+
     },
 
     removeChildNow: function (child) {
@@ -248,6 +281,14 @@ game.StudentManager = me.Container.extend({
         this.updateChildBounds();
     },
 
+    studentTypeToStr: function(studentType) {
+      for (prop in this.studentTypeEnum) {
+        if (this.studentTypeEnum[prop] == studentType) {
+          return prop;
+        }
+      }
+    },
+
     onStudentAdded: function(tempStudent) {
       if (this.debugLevel > 0) console.log("StudentManager: onStudentAdded: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
@@ -259,6 +300,24 @@ game.StudentManager = me.Container.extend({
         studentData.name = tempStudent.name;
         studentData.id = tempStudent.id;
         studentData.startMonth = tempStudent.startMonth;
+        studentData.entity = tempStudent;
+
+        switch(tempStudent.dialog.testrandom) {
+            case 0:
+                studentData.studentType = this.studentTypeEnum.dabbler;
+                break;
+            case 1:
+                studentData.studentType = this.studentTypeEnum.obsessive;
+                break;
+            case 2:
+                studentData.studentType = this.studentTypeEnum.hacker;
+                break;
+            case 3:
+                studentData.studentType = this.studentTypeEnum.balanced;
+                break;
+            default:
+                studentData.studentType = this.studentTypeEnum.unknown;
+        }
 
         this.studentMap.set(tempStudent.id, studentData);
       }
@@ -269,40 +328,11 @@ game.StudentManager = me.Container.extend({
       game.studentsPanel = me.game.world.getChildByName("studentsPanel")[0];
       game.studentsPanel.setText("Students: "+this.activeStudents);
 
-      if (this.timer == null) {
-        // wait for 2 sec - let the hero go away
-        var waitFor = 2000;
-
-        this.timer = me.timer.setTimeout(function () {
-          console.log("StudentManager: add new student");
-
-          // spawn a new student using studentManager after a random period of time...
-          this.spawnStudent();
-
-          me.timer.clearTimeout(this.timer);
-          this.timer = null;
-        }.bind(this), waitFor);
-      }
     },
 
     onStudentRemoved: function() {
+      if (this.debugLevel > 0) console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
-      if (this.timer == null) {
-        // wait for 2 sec - let the hero go away
-        var waitFor = 2000;
-
-        if (this.debugLevel > 0) console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
-
-        this.timer = me.timer.setTimeout(function () {
-          console.log("StudentManager: add new student");
-
-          // spawn a new student using studentManager after a random period of time...
-          this.spawnStudent();
-
-          me.timer.clearTimeout(this.timer);
-          this.timer = null;
-        }.bind(this), waitFor);
-      } // otherwise timer is already active
     },
 
 

@@ -245,8 +245,6 @@ game.BaseEntity = me.Entity.extend({
 
             if (this.currentState == this.StateEnum.movingToPosition) {
               this.currentState = this.StateEnum.stoppedAtPosition;
-
-              game.studentManager.onStudentAdded(this);
             } else {
               this.currentState = this.StateEnum.stopped;
             }
@@ -468,31 +466,54 @@ game.BaseEntity = me.Entity.extend({
       }
     },
 
+    onMakeLeave:function() {
+      console.log("onMakeLeave: ", this.name);
+
+      //this.currentState = this.StateEnum.moving;
+      this.currentState = this.StateEnum.leaving;
+
+      // get position from game.StudentManager.exitChild .pos.x , pos.y
+      game.ExitEntity = me.game.world.getChildByName("exit")[0];
+      var exitPos = game.ExitEntity.pos;
+      this._setTargetPosition(exitPos);
+      this.isTalking = false;
+    },
+
     onDialogReset:function(){
       console.log("onDialogReset: ", this.name);
 
       // check student conversation saved value
       if (this.name == "student") {
         // console.log("onDialogReset: ", this.name, " dialog.testrandom: ", this.dialog.testrandom);
+
+        // see student types from data/dialog/dialogue.js
+        let studentType = "unknown";
+        switch(this.dialog.testrandom) {
+            case 0:
+                studentType = "dabbler";
+                break;
+            case 1:
+                studentType = "obsessive";
+                break;
+            case 2:
+                studentType = "hacker";
+                break;
+            case 3:
+                studentType = "balanced";
+                break;
+            default:
+                studentType = "unknown";
+        }
+
+        console.log("onDialogReset: ", this.name, this.id, studentType);
         console.log("onDialogReset: ", this.name, this.id, " dialog.signedup: ", this.dialog.signedup);
         console.log("onDialogReset: ", this.name, this.id, " dialog.turnedaway: ", this.dialog.turnedaway);
 
         if (this.currentState == this.StateEnum.stopped) {
             if (this.dialog.turnedaway) {
-                //this.currentState = this.StateEnum.moving;
-                this.currentState = this.StateEnum.leaving;
 
-                // get position from game.StudentManager.exitChild .pos.x , pos.y
-                game.ExitEntity = me.game.world.getChildByName("exit")[0];
-                var exitPos = game.ExitEntity.pos;
+              this.onMakeLeave();
 
-                if (this.renderable) {
-                    this._setTargetPosition(exitPos);
-                } else {
-                  console.log("onDialogReset: ", this.name, " renderable is undefined!");
-                }
-
-                this.isTalking = false;
             } else if (this.dialog.signedup) {
               this.currentState = this.StateEnum.movingToPosition;
 
@@ -502,6 +523,8 @@ game.BaseEntity = me.Entity.extend({
 
               this._setTargetPosition(studentPos);
               this.isTalking = false;
+
+              game.studentManager.onStudentAdded(this);
 
             } else {
               this.isTalking = false;
@@ -747,7 +770,7 @@ game.HeroEntity = game.BaseEntity.extend({
 
     onDestroyEvent : function() {
 		    // me.input.releasePointerEvent('mousedown', me.game.viewport);
-        me.input.releasePointerEvent('pointerdown', me.game.viewport);        
+        me.input.releasePointerEvent('pointerdown', me.game.viewport);
     },
 });
 

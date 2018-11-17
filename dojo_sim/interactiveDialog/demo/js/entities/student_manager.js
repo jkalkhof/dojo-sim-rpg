@@ -102,13 +102,14 @@ game.StudentManager = me.Container.extend({
       //tempChild.name = "oldman-generated";
       tempChild.name = "student";
       tempChild.startMonth = this.currentMonth;
+      tempChild.assignedPosition = -1;
 
       //this.activeStudents += 1;
       this.totalStudents += 1;
 
       // copy value
-      //tempChild.id = JSON.parse(JSON.stringify(this.totalStudents));
-      tempChild.id = JSON.parse(JSON.stringify(this.activeStudents+1));
+      tempChild.id = JSON.parse(JSON.stringify(this.totalStudents));
+      // tempChild.id = JSON.parse(JSON.stringify(this.activeStudents+1));
       // tempChild.id = JSON.parse(JSON.stringify(this.activeStudents));
       // tempChild.id = this.totalStudents;
       // debugger;
@@ -181,11 +182,16 @@ game.StudentManager = me.Container.extend({
         console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
           " startMonth:", value.startMonth,
           " skillLevel:", skillLevel,
-          " studentType:", this.studentTypeToStr(value.studentType));
+          " studentType:", this.studentTypeToStr(value.studentType),
+          " assignedPosition:", value.entity.assignedPosition);
 
         //if (value.studentType == this.studentTypeEnum.dabbler) {
         //if (value.studentType != this.studentTypeEnum.balanced) {
         if ((value.studentType != this.studentTypeEnum.balanced) && (skillLevel > 0)) {
+          console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
+            " startMonth:", value.startMonth,
+            " skillLevel:", skillLevel,
+            " **MAKE LEAVE");
             value.entity.onMakeLeave();
         }
 
@@ -232,21 +238,54 @@ game.StudentManager = me.Container.extend({
 
     },
 
-    getAvailablePosition: function(studentId) {
-      console.log("StudentManager: getAvailablePosition:", studentId);
+    getAvailablePosition: function(studentEntity) {
+      if (this.debugLevel > 1) console.log("StudentManager: getAvailablePosition: studentId:", studentEntity.id);
+
+      // scan through students for a free position
+      var positionMap = new Map();
+      let position = 1;
+      let maxPosition = 1;
+      for (var [key, value] of this.studentMap.entries()) {
+        console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
+          " studentType:", this.studentTypeToStr(value.studentType),
+          " assignedPosition:", value.entity.assignedPosition);
+
+        // note positions are unordered in this list!
+        // npcs may leave and replace in any position - example: 1,3,5,2,4
+        // so an ordered search will fail - use dictionary instead!
+        positionMap.set(value.entity.assignedPosition,1);
+
+        if (value.entity.assignedPosition > maxPosition) {
+          maxPosition = value.entity.assignedPosition;
+        }
+      }
+
+      if (this.debugLevel > 1) console.log("StudentManager: getAvailablePosition: maxPosition: ",maxPosition);
+
+      let positionFound = false;
+      for (i = 1; (i <= (maxPosition+1)) && !positionFound; i++) {
+        if (this.debugLevel > 1) console.log("StudentManager: getAvailablePosition: check position: ",i);
+        if (positionMap.get(i) == undefined) {
+          if (this.debugLevel > 0) console.log("StudentManager: getAvailablePosition: found unused position: ",i);
+          position = i;
+          positionFound = true;
+        }
+      }
 
       // 0,1,2,3,4
       // 5,6,7,8,9
-      var currentCol = (studentId -1 )% this.COLS;
-      var currentRow = Math.floor((studentId -1) / this.COLS);
+      var currentCol = (position -1 )% this.COLS;
+      var currentRow = Math.floor((position -1) / this.COLS);
 
-      console.log("StudentManager: getAvailablePosition: row: ",currentRow," col: ",currentCol);
+      studentEntity.assignedPosition = position;
+
+      if (this.debugLevel > 1) console.log("StudentManager: getAvailablePosition: row: ",currentRow," col: ",currentCol);
 
       var pos = new me.Vector2d(
           this.xoffset + (currentCol * 64),
           this.yoffset + (currentRow * 64));
 
-      console.log("StudentManager: getAvailablePosition: pos.x: ",pos.x," pos.y: ",pos.y);
+      if (this.debugLevel > 1) console.log("StudentManager: getAvailablePosition: pos.x: ",pos.x," pos.y: ",pos.y);
 
       return pos;
     },

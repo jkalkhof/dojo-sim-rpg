@@ -18,6 +18,8 @@ window.game = window.game || {};
  * myEntity.dialog = new game.Dialog();
  */
 game.Dialog = function( data, onReset, onShow, onSpriteLookup ) {
+	this.debugLevel = 0;
+
 	if( data ) {
 		this.setData( data );
 	}
@@ -115,7 +117,7 @@ _p.set = function( id ) {
  * @function
  */
 _p.show = function( ) {
-	console.log("DialogPrototype: show:");
+	if (this.debugLevel > 0) console.log("DialogPrototype: show:");
 	this._cleanDOMContainer( );
 
 	var DOMSentence = this.get( ).isChoice ? this._getChoiceAsDOM( this.get( ) ) : this._getSentenceAsDOM( this.get( ) );
@@ -168,7 +170,7 @@ _p.getRoot = function( ) {
  * @return {?Object} actor or null
  */
 _p.getActor = function( id ) {
-	console.log("DialogPrototype: getActor: ",id);
+	if (this.debugLevel > 0) console.log("DialogPrototype: getActor: ",id);
 
 	var actor = null;
 	for( var idx = 0; idx < this._data.actors.length; idx++ ) {
@@ -344,13 +346,13 @@ _p._isActive = function( sentence ) {
 _p._getSentenceAsDOM = function( sentence ) {
 	var actorName = this.getActor( sentence.actor ).name;
 
-	console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
+	if (this.debugLevel > 0) console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
 
 	if (actorName == "student") {
 		// use a special hook to get spriteIndex from StudentEntity.spriteSheetGroup
 		if (this.onSpriteLookup) {
 			actorName = "student"+this.onSpriteLookup();
-			console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
+			if (this.debugLevel > 0) console.log("DialogPrototype: _getSentenceAsDOM: dialog ",actorName);
 		}
 	}
 

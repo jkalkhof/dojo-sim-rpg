@@ -161,13 +161,13 @@ game.UI.CheckBoxUI = me.GUI_Object.extend({
 game.UI.TextUI = me.Container.extend({
 
       setText: function(label) {
-        console.log("TextUI: setText: ", label);
+        if (this.debugLevel > 0) console.log("TextUI: setText: ", label);
         this.label = label;
         this.LabelText.label = label;
       },
 
       init: function(x, y, width, height, label) {
-          var debugLevel = 1;
+          var debugLevel = 0;
 
           // call the constructor
           this._super(me.Container, "init", [x, y, width, height]);

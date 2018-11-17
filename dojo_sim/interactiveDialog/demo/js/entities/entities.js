@@ -117,7 +117,7 @@ game.BaseEntity = me.Entity.extend({
               if (this.myPath) {
                   for (var i =0; i < this.myPath.length; i++) {
                     let graphNode = this.myPath[i];
-                    console.log("BaseEntity: update: myPath[",i,"]: ",graphNode.x,",",graphNode.y);
+                    if (this.debugLevel > 0) console.log("BaseEntity: update: myPath[",i,"]: ",graphNode.x,",",graphNode.y);
                   }
 
                   this.dest = this.myPath.pop();
@@ -162,7 +162,7 @@ game.BaseEntity = me.Entity.extend({
           // reached path node - go to next node on path
           if (bodyBounds.overlaps(this.dest.rect) && this.myPath.length > 0) {
               // TODO - do this with non constant, add some fuzz factor
-              console.log("BaseEntity: Reached "+this.dest.pos.x+","+this.dest.pos.y," myPath.length:",this.myPath.length);
+              if (this.debugLevel > 0) console.log("BaseEntity: Reached "+this.dest.pos.x+","+this.dest.pos.y," myPath.length:",this.myPath.length);
               this.dest = this.myPath.pop();
 
               if (this.dest && (this.debugLevel > 1)) {
@@ -220,7 +220,7 @@ game.BaseEntity = me.Entity.extend({
 
               // below threshold and at last dest on path?
               if (this.myPath.length == 0 && belowXdistThreshold && belowYdistThreshold) {
-                console.log("BaseEntity: update: dest distance:",
+                if (this.debugLevel > 0) console.log("BaseEntity: update: dest distance:",
                   Number(xdiff).toFixed(2),",",Number(ydiff).toFixed(2), " below threshold!");
                 this.dest = null;
               }
@@ -235,7 +235,7 @@ game.BaseEntity = me.Entity.extend({
 
           if (this.myPath && this.myPath.length == 0 && this.dest == null) {
             // STOP!!!
-            console.log("BaseEntity: reached target!");
+            if (this.debugLevel > 0) console.log("BaseEntity: reached target!");
             this._target = null;
             this.reachedTarget = true;
 
@@ -480,7 +480,7 @@ game.BaseEntity = me.Entity.extend({
     },
 
     onDialogReset:function(){
-      console.log("onDialogReset: ", this.name);
+      if (this.debugLevel > 0) console.log("onDialogReset: ", this.name);
 
       // check student conversation saved value
       if (this.name == "student") {
@@ -505,9 +505,9 @@ game.BaseEntity = me.Entity.extend({
                 studentType = "unknown";
         }
 
-        console.log("onDialogReset: ", this.name, this.id, studentType);
-        console.log("onDialogReset: ", this.name, this.id, " dialog.signedup: ", this.dialog.signedup);
-        console.log("onDialogReset: ", this.name, this.id, " dialog.turnedaway: ", this.dialog.turnedaway);
+        if (this.debugLevel > 0) console.log("onDialogReset: ", this.name, this.id, studentType);
+        if (this.debugLevel > 0) console.log("onDialogReset: ", this.name, this.id, " dialog.signedup: ", this.dialog.signedup);
+        if (this.debugLevel > 0) console.log("onDialogReset: ", this.name, this.id, " dialog.turnedaway: ", this.dialog.turnedaway);
 
         if (this.currentState == this.StateEnum.stopped) {
             if (this.dialog.turnedaway) {
@@ -519,7 +519,7 @@ game.BaseEntity = me.Entity.extend({
 
               // navigate back to target position
               game.studentManager = me.game.world.getChildByName("studentManager")[0];
-              var studentPos = game.studentManager.getAvailablePosition(this.id);
+              var studentPos = game.studentManager.getAvailablePosition(this);
 
               this._setTargetPosition(studentPos);
               this.isTalking = false;
@@ -537,7 +537,7 @@ game.BaseEntity = me.Entity.extend({
         	window.setTimeout(function(){
         		//delete this.isTalking;
             this.isTalking = false;
-            console.log("onDialogReset: ", this.name, " isTalking: ", this.isTalking);
+            if (this.debugLevel > 0) console.log("onDialogReset: ", this.name, " isTalking: ", this.isTalking);
         	}.bind(this), waitFor);
 
         } else if (this.currentState == this.StateEnum.stoppedAtPosition) {
@@ -545,7 +545,7 @@ game.BaseEntity = me.Entity.extend({
 
           // navigate back to target position
           game.studentManager = me.game.world.getChildByName("studentManager")[0];
-          var studentPos = game.studentManager.getAvailablePosition(this.id);
+          var studentPos = game.studentManager.getAvailablePosition(this);
 
           this._setTargetPosition(studentPos);
           this.isTalking = false;
@@ -1025,7 +1025,7 @@ game.StudentEntity = game.BaseEntity.extend({
         // this.gravity = 0;
         this.body.gravity = new me.Vector2d(0,0);
 
-        this.debugLevel = 1;
+        this.debugLevel = 0;
 
         // set the default horizontal & vertical speed (accel vector)
         // walking & jumping speed
@@ -1058,7 +1058,7 @@ game.StudentEntity = game.BaseEntity.extend({
           this.spriteSheetGroup = 6;
         }
 
-        console.log("StudentEntity: init: spriteSheetGroup: ", this.spriteSheetGroup);
+        if (this.debugLevel > 0) console.log("StudentEntity: init: spriteSheetGroup: ", this.spriteSheetGroup);
         // debugger;
 
         this.createRenderable();
@@ -1112,17 +1112,17 @@ game.StudentEntity = game.BaseEntity.extend({
         // wait for 2 sec - let the hero go away
         var waitFor = 10000;
         this.timer = me.timer.setTimeout(function () {
-          console.log("Student:",this.name,this.id," leave check timeout");
+          if (this.debugLevel > 0) console.log("Student:",this.name,this.id," leave check timeout");
 
           if (this.isTalking) {
-            console.log("Student: leave check timeout: ",this.name,this.id," isTalking");
+            if (this.debugLevel > 0) console.log("Student: leave check timeout: ",this.name,this.id," isTalking");
           } else {
             if (this.dialog.signedup) {
-              console.log("Student: leave check timeout: ",this.name,this.id," signedup");
+              if (this.debugLevel > 0) console.log("Student: leave check timeout: ",this.name,this.id," signedup");
             } else if (this.dialog.turnedaway) {
-              console.log("Student: leave check timeout: ",this.name,this.id," turnedaway");
+              if (this.debugLevel > 0) console.log("Student: leave check timeout: ",this.name,this.id," turnedaway");
             } else {
-              console.log("Student: leave check timeout: ",this.name,this.id," not signedup or turnedaway");
+              if (this.debugLevel > 0) console.log("Student: leave check timeout: ",this.name,this.id," not signedup or turnedaway");
 
               this.currentState = this.StateEnum.leaving;
 
@@ -1134,7 +1134,9 @@ game.StudentEntity = game.BaseEntity.extend({
           }
 
 
-          me.timer.clearInterval(this.timer);
+          //me.timer.clearInterval(this.timer);
+          me.timer.clearTimeout(this.timer);
+          this.timer = null;
         }.bind(this), waitFor);
 
     },
@@ -1229,7 +1231,7 @@ game.StudentEntity = game.BaseEntity.extend({
 
     // called by dialogue to get proper sprite index
     onSpriteLookup:function(){
-      console.log("onSpriteLookup: ", this.name);
+      if (this.debugLevel > 0) console.log("onSpriteLookup: ", this.name);
 
       return this.spriteSheetGroup;
     },
@@ -1270,6 +1272,17 @@ game.StudentEntity = game.BaseEntity.extend({
           return false;
         }
     },
+
+    onDeactivateEvent: function() {
+      if (this.debugLevel > 0) console.log("StudentEntity(",this.name,"): onDeactivateEvent");
+
+      if (this.timer != null) {
+        me.timer.clearTimeout(this.timer);
+      }
+
+      this._super(me.Entity, "onDeactivateEvent");
+    },
+
 
     /*
     draw debug pathfinding boxes and sprite

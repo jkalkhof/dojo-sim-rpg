@@ -123,6 +123,7 @@ game.StudentManager = me.Container.extend({
         // add student fees
         this.savings += (this.activeStudents * 150);
 
+        // game over if savings < 0
         if (this.savings < 0) {
         //if (this.savings < 2000) { // test end game
           game.dojosimPanel = me.game.world.getChildByName("dojosimPanel")[0];
@@ -139,8 +140,7 @@ game.StudentManager = me.Container.extend({
           me.state.change(me.state.GAMEOVER);
         }
 
-        // TODO: winning game state
-        // game over if skill level > 4 before 12 months
+
 
         // game over if savings < 0
         game.timePanel = me.game.world.getChildByName("timePanel")[0];
@@ -174,6 +174,7 @@ game.StudentManager = me.Container.extend({
       // }
 
 
+      // calculate dojoSkillLevel by checking practice time of all students
       var totalSkillValues = 0;
 
       for (var [key, value] of this.studentMap.entries()) {
@@ -206,7 +207,24 @@ game.StudentManager = me.Container.extend({
       game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
       if (game.dojoSkillPanel) game.dojoSkillPanel.setText("Dojo Skill: "+Number(this.dojoSkillLevel).toFixed(2));
 
+      // TODO: winning game state
+      // game over if skill level > 4 before 12 months
+      if ((this.dojoSkillLevel >= 4.0) && (this.currentMonth >= 7)) {
+        game.dojosimPanel = me.game.world.getChildByName("dojosimPanel")[0];
+        me.game.world.removeChild(game.dojosimPanel);
 
+        // copy to game.data globals
+        game.data.savings = this.savings;
+        // game.data.savings = -1; // test end game
+        game.data.dojoSkillLevel = this.dojoSkillLevel;
+
+        // switch to menu state and display menu screen
+        me.state.set(me.state.GAMEOVER, new MenuScreen());
+        //me.state.set(me.state.MENU, new game.MenuScreen());
+        me.state.change(me.state.GAMEOVER);
+      }
+
+      
     },
 
     removeStudent: function(tempStudent) {

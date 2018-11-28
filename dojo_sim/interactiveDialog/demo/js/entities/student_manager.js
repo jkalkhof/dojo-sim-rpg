@@ -16,8 +16,11 @@ game.StudentManager = me.Container.extend({
         this.activeStudents = 0;
 
         this.savings = 2000;
+        //this.savings = 100; // for testing lose
         this.currentMonth = 0;
+        //this.currentMonth = 7; // for testing win
         this.dojoSkillLevel = 0;
+        // this.dojoSkillLevel = 5;
 
         // reset the score
         game.data.score = 0;
@@ -123,6 +126,11 @@ game.StudentManager = me.Container.extend({
         // add student fees
         this.savings += (this.activeStudents * 150);
 
+        // play the "gameover_sfx" audio clip with a lower volume level
+        // volume.clamp is not a function? bug in melonjs?
+        //me.audio.play("sfx_movement_portal1", false, null, 0.5);
+        me.audio.play("sfx_movement_portal1");
+
         // game over if savings < 0
         if (this.savings < 0) {
         //if (this.savings < 2000) { // test end game
@@ -138,6 +146,8 @@ game.StudentManager = me.Container.extend({
           me.state.set(me.state.GAMEOVER, new MenuScreen());
           //me.state.set(me.state.MENU, new game.MenuScreen());
           me.state.change(me.state.GAMEOVER);
+
+          me.audio.play("misc_sound");
         }
 
 
@@ -209,9 +219,13 @@ game.StudentManager = me.Container.extend({
 
       // TODO: winning game state
       // game over if skill level > 4 before 12 months
+      // this.dojoSkillLevel = 7.0; // for testing win
       if ((this.dojoSkillLevel >= 4.0) && (this.currentMonth >= 7)) {
         game.dojosimPanel = me.game.world.getChildByName("dojosimPanel")[0];
-        me.game.world.removeChild(game.dojosimPanel);
+        if (game.dojosimPanel) {
+            me.game.world.removeChild(game.dojosimPanel);
+        }
+
 
         // copy to game.data globals
         game.data.savings = this.savings;
@@ -222,9 +236,11 @@ game.StudentManager = me.Container.extend({
         me.state.set(me.state.GAMEOVER, new MenuScreen());
         //me.state.set(me.state.MENU, new game.MenuScreen());
         me.state.change(me.state.GAMEOVER);
+
+        me.audio.play("save");
       }
 
-      
+
     },
 
     removeStudent: function(tempStudent) {
@@ -249,6 +265,8 @@ game.StudentManager = me.Container.extend({
 
           game.studentsPanel = me.game.world.getChildByName("studentsPanel")[0];
           game.studentsPanel.setText("Students: "+this.activeStudents);
+
+          me.audio.play("negative_2");
       }
 
       // remove it - student leaves through exit
@@ -377,6 +395,8 @@ game.StudentManager = me.Container.extend({
         }
 
         this.studentMap.set(tempStudent.id, studentData);
+
+        me.audio.play("positive");
       }
 
       // game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
@@ -390,6 +410,7 @@ game.StudentManager = me.Container.extend({
     onStudentRemoved: function() {
       if (this.debugLevel > 0) console.log("StudentManager: onStudentRemoved: totalStudents:",this.totalStudents," activeStudents:",this.activeStudents);
 
+      me.audio.play("negative_2");
     },
 
 

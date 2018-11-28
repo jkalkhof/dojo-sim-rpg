@@ -13,7 +13,7 @@ game.resources = [
 	 // UI Texture
 	 { name: "UI_Assets",    type: "image",  src: "data/img/UI_Assets.png" },
 	 { name: "grey_panel", type:"image", src: "data/img/PNG/grey_panel.png"},
-	 
+
 	 /* JSON Content. */
 	 // texturePacker Atlas
 	 { name: "UI_Assets",         type: "json",   src: "data/img/UI_Assets.json" },
@@ -35,8 +35,16 @@ game.resources = [
 	 * {name: "example_bgm", type: "audio", src: "data/bgm/", channel : 1},
 	 */
 
-	/* Sound effects.
-	 * @example
-	 * {name: "example_sfx", type: "audio", src: "data/sfx/", channel : 2}
-	 */
+	 /* Sound effects.
+		* @example
+		* { name: "example_sfx", type: "audio", src: "data/sfx/" }
+		*/
+	 {name: "misc_menu", type: "audio", src: "data/sfx/"},
+	 {name: "misc_sound", type: "audio", src: "data/sfx/"},
+	 {name: "load", type: "audio", src: "data/sfx/"},
+	 {name: "save", type: "audio", src: "data/sfx/"},
+	 {name: "positive",  type: "audio", src: "data/sfx/"},
+	 {name: "negative_2",  type: "audio", src: "data/sfx/"},
+	 {name: "sfx_movement_portal1",  type: "audio", src: "data/sfx/"},
+
 ];

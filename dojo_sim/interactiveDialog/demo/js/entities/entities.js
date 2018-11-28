@@ -462,6 +462,9 @@ game.BaseEntity = me.Entity.extend({
       } else if (entity.name == "student") {
         entity.isTalking = true;
       	this.talkWith = entity;
+
+        me.audio.play("misc_menu");
+
       	entity.dialog.show();
       }
     },

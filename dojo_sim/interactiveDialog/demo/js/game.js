@@ -37,7 +37,8 @@ var game = {
 	me.plugin.register(me.astar, "aStarPlugin");
 
 	// Initialize the audio.
-	me.audio.init("mp3,ogg");
+	me.audio.init("wav");
+	// me.audio.init("mp3,ogg");
 
 	// Set a callback to run when loading is complete.
 	me.loader.onload = this.loaded.bind(this);
@@ -89,7 +90,7 @@ var game = {
 		// testing the end state/ gameover screens
 		//me.state.set(me.state.MENU, new MenuScreen());
 
-		// go to the menu, then start play 
+		// go to the menu, then start play
 		me.state.change(me.state.MENU);
 
 	}

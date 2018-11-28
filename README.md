@@ -40,3 +40,8 @@ Simple conversations with other NPCs.
 	http-server -a localhost -p 8000 -c-1
 4. run app from localhost
 	http://localhost:8000/
+	http://localhost:8000/dojo_sim/interactiveDialog/demo/
+
+## build Instructions
+1. cd to dojo_sim/interactiveDialog/demo 
+2. zip up local directory, upload to website

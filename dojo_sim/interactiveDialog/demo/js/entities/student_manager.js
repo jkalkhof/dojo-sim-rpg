@@ -16,11 +16,11 @@ game.StudentManager = me.Container.extend({
         this.activeStudents = 0;
 
         this.savings = 2000;
-        //this.savings = 100; // for testing lose
+        // this.savings = 0; // for testing lose
         this.currentMonth = 0;
-        //this.currentMonth = 7; // for testing win
+        // this.currentMonth = 7; // for testing win
         this.dojoSkillLevel = 0;
-        // this.dojoSkillLevel = 5;
+        // this.dojoSkillLevel = 5; // for testing win
 
         // reset the score
         game.data.score = 0;
@@ -132,7 +132,7 @@ game.StudentManager = me.Container.extend({
         me.audio.play("sfx_movement_portal1");
 
         // game over if savings < 0
-        if (this.savings < 0) {
+        if (this.savings <= 0) {
         //if (this.savings < 2000) { // test end game
           game.dojosimPanel = me.game.world.getChildByName("dojosimPanel")[0];
           me.game.world.removeChild(game.dojosimPanel);
@@ -185,37 +185,40 @@ game.StudentManager = me.Container.extend({
 
 
       // calculate dojoSkillLevel by checking practice time of all students
-      var totalSkillValues = 0;
+      if (this.studentMap.size > 0) {
+        var totalSkillValues = 0;
 
-      for (var [key, value] of this.studentMap.entries()) {
-        let skillLevel = this.currentMonth - value.startMonth;
-        totalSkillValues += skillLevel;
-        console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
-          " startMonth:", value.startMonth,
-          " skillLevel:", skillLevel,
-          " studentType:", this.studentTypeToStr(value.studentType),
-          " assignedPosition:", value.entity.assignedPosition);
-
-        //if (value.studentType == this.studentTypeEnum.dabbler) {
-        //if (value.studentType != this.studentTypeEnum.balanced) {
-        if ((value.studentType != this.studentTypeEnum.balanced) && (skillLevel > 0)) {
+        for (var [key, value] of this.studentMap.entries()) {
+          let skillLevel = this.currentMonth - value.startMonth;
+          totalSkillValues += skillLevel;
           console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
             " startMonth:", value.startMonth,
             " skillLevel:", skillLevel,
-            " **MAKE LEAVE");
-            value.entity.onMakeLeave();
+            " studentType:", this.studentTypeToStr(value.studentType),
+            " assignedPosition:", value.entity.assignedPosition);
+
+          //if (value.studentType == this.studentTypeEnum.dabbler) {
+          //if (value.studentType != this.studentTypeEnum.balanced) {
+          if ((value.studentType != this.studentTypeEnum.balanced) && (skillLevel > 0)) {
+            console.log("StudentManager: studentDict(",key,"): ", value.name, value.id,
+              " startMonth:", value.startMonth,
+              " skillLevel:", skillLevel,
+              " **MAKE LEAVE");
+              value.entity.onMakeLeave();
+          }
+
+          if (key < 0) {
+            debugger;
+          }
         }
 
-        if (key < 0) {
-          debugger;
-        }
+        // integer value
+        //this.dojoSkillLevel = ~~(totalSkillValues / this.activeStudents);
+        this.dojoSkillLevel = (totalSkillValues / this.activeStudents);
+        game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
+        if (game.dojoSkillPanel) game.dojoSkillPanel.setText("Dojo Skill: "+Number(this.dojoSkillLevel).toFixed(2));
+
       }
-
-      // integer value
-      //this.dojoSkillLevel = ~~(totalSkillValues / this.activeStudents);
-      this.dojoSkillLevel = (totalSkillValues / this.activeStudents);
-      game.dojoSkillPanel = me.game.world.getChildByName("dojoSkillPanel")[0];
-      if (game.dojoSkillPanel) game.dojoSkillPanel.setText("Dojo Skill: "+Number(this.dojoSkillLevel).toFixed(2));
 
       // TODO: winning game state
       // game over if skill level > 4 before 12 months

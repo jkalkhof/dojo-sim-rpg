@@ -11,7 +11,8 @@ game.UI.ButtonUI = me.GUI_Object.extend({
     /**
      * constructor
      */
-    init: function(x, y, color, label) {
+    init: function(x, y, color, label, clickCallback) {
+    //init: function(x, y, color, label) {
         this._super(me.GUI_Object, "init", [ x, y, {
             image: game.texture,
             region : color + "_button04"
@@ -22,7 +23,7 @@ game.UI.ButtonUI = me.GUI_Object.extend({
         this.clicked_region = game.texture.getRegion(color + "_button05");
 
         this.anchorPoint.set(0, 0);
-        this.setOpacity(0.5);
+        // this.setOpacity(0.5);
 
         this.font = new me.Font("kenpixel", 12, "black");
         this.font.textAlign = "center";
@@ -32,6 +33,12 @@ game.UI.ButtonUI = me.GUI_Object.extend({
 
         // only the parent container is a floating object
         this.floating = false;
+
+        // new stuff - Jerry
+        this.clickCallback = null;
+        if( typeof clickCallback == "function" ) {
+          this.clickCallback = clickCallback;
+        }
     },
 
     /**
@@ -42,6 +49,10 @@ game.UI.ButtonUI = me.GUI_Object.extend({
         // account for the different sprite size
         this.pos.y += this.height - this.clicked_region.height ;
         this.height = this.clicked_region.height;
+
+        // new stuff - Jerry
+        this.clickCallback && this.clickCallback();
+
         // don't propagate the event
         return false;
     },

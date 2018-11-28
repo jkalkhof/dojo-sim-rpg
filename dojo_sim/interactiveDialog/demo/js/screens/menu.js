@@ -188,7 +188,8 @@ var MenuScreen = me.ScreenObject.extend({
 						me.game.viewport.width/2 - (buttonWidth/2),
 						me.game.viewport.height * .8,
 	          "green",
-	          "Restart"
+	          "Restart",
+            this.onClick.bind(this)
         );
 
         // new uiButton

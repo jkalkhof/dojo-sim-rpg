@@ -8,6 +8,7 @@ This project is based off the html5 game engine melonjs.
 ## Major features
 - top down, click to navigate map movement
 - simple dialogue system
+- ported pathfinding system
 
 ## version 1.0
 This version is very basic and only has basic movement of the main character.
@@ -43,5 +44,9 @@ Simple conversations with other NPCs.
 	http://localhost:8000/dojo_sim/interactiveDialog/demo/
 
 ## build Instructions
-1. cd to dojo_sim/interactiveDialog/demo 
+1. cd to dojo_sim/interactiveDialog/demo
 2. zip up local directory, upload to website
+
+## Test live version
+This game can also be tested live from my itch.io page:
+https://jerryartist.itch.io/dojo-sim
